@@ -1,0 +1,17 @@
+{
+  "name": "金坛麻将",
+  "short_name": "金坛麻将",
+  "description": "常州金坛玩法的单机麻将，不能吃牌，一花起胡。",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a3a22",
+  "theme_color": "#0a3a22",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
