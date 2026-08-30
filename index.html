@@ -230,6 +230,7 @@ html, body {
   margin: calc(-4px * var(--fs)) 0 calc(9px * var(--fs)); padding: 0 calc(4px * var(--fs));
   font-size: calc(13px * var(--fs)); color: #b8ceba;
 }
+.set-hint.warn { color: #ffd0a8; }
 .seg { display: flex; flex-wrap: wrap; gap: calc(6px * var(--fs)); }
 .seg button {
   font: inherit; font-size: calc(13.5px * var(--fs)); font-weight: 700;
@@ -692,6 +693,30 @@ html, body {
 .wb-rank.up   { color: #7a4a05; background: linear-gradient(#ffe9a8, #f0c95c); box-shadow: 0 2px 0 #c8a63c; }
 .wb-rank.down { color: #7d1219; background: rgba(194,16,44,.15); }
 .wb-stat { flex: 0 0 100%; font-size: calc(12.5px * var(--fs)); color: #6b5a42; }
+
+/* 摊牌 */
+.settle .showdown { flex: 0 0 100%; }
+.sd-row { padding: calc(6px * var(--fs)) 0; border-bottom: 1px solid rgba(122,62,13,.14); }
+.sd-row:last-child { border-bottom: none; }
+.sd-row.won {
+  background: rgba(13,122,62,.08); border-radius: calc(6px * var(--fs));
+  padding-left: calc(7px * var(--fs)); padding-right: calc(7px * var(--fs));
+}
+.sd-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: calc(6px * var(--fs));
+  font-size: calc(13.5px * var(--fs)); font-weight: 700; color: #3a2c18;
+  margin-bottom: calc(4px * var(--fs));
+}
+.sd-tag {
+  font-size: calc(11.5px * var(--fs)); font-weight: 700; color: #fff;
+  border-radius: 999px; padding: calc(1px * var(--fs)) calc(9px * var(--fs));
+}
+.sd-tag.win  { background: #0d7a3e; }
+.sd-tag.lose { background: var(--hu); }
+.sd-note { font-size: calc(12px * var(--fs)); font-weight: 400; color: #7a6a4e; }
+.sd-note.ting { color: #0d7a3e; font-weight: 700; }
+.sd-tiles { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1px; }
+.sd-gap { width: calc(9px * var(--fs)); flex: none; }
 .settle .delta-plus  { color: #0d7a3e; font-weight: 700; }
 .settle .delta-minus { color: var(--hu); font-weight: 700; }
 .settle strong { color: #1d1408; }
@@ -874,14 +899,31 @@ html, body {
   /* 出牌速度 5 档（毫秒） */
   var SPEED = { vslow: 3500, slow: 2500, mid: 1800, fast: 1100, vfast: 600 };
 
-  /* 电脑难度 4 档。sloppy = 走神概率，defend = 防守权重（照牌河推安全牌） */
+  /* 对手水平 4 档
+     sloppy = 走神概率（随机乱打、漏碰漏杠）
+     defend = 防守权重（照牌河挑安全牌打）
+     master = 走完整的向听 + 进张概率计算 */
   var DIFF = {
-    rookie: { sloppy: 0.55, defend: 0 },
-    easy:   { sloppy: 0.30, defend: 0 },
-    normal: { sloppy: 0.10, defend: 0.45 },
-    hard:   { sloppy: 0.00, defend: 1 }
+    wild:   { sloppy: 0.92, defend: 0,   master: false },  /* 不会玩，基本瞎打 */
+    rookie: { sloppy: 0.45, defend: 0,   master: false },  /* 会打，常出错 */
+    normal: { sloppy: 0.12, defend: 0.5, master: false },  /* 偶尔失误 */
+    master: { sloppy: 0,    defend: 1,   master: true  }   /* 记牌算概率 */
   };
-  function diff() { return DIFF[settings.difficulty] || DIFF.easy; }
+  var DIFF_ALIAS = { easy: "rookie", hard: "master" };     /* 旧存档的值 */
+  function diff() {
+    var k = DIFF_ALIAS[settings.difficulty] || settings.difficulty;
+    return DIFF[k] || DIFF.rookie;
+  }
+
+  /* 牌运 3 档：只影响发到你手上的牌，不影响电脑，也不影响算分
+     kind = 起手和摸牌都朝你倾斜；fair / hard = 完全随机洗牌
+     hard 额外关掉记牌提示和听牌提示，逼你自己记 */
+  var LUCK = {
+    kind: { bias: true,  assist: true  },
+    fair: { bias: false, assist: true  },
+    hard: { bias: false, assist: false }
+  };
+  function luck() { return LUCK[settings.luck] || LUCK.fair; }
 
   /* 点数排布按实物牌：坐标是 viewBox(60×82) 的百分比 */
   var DOTS = {
@@ -910,7 +952,8 @@ html, body {
   var settings = {
     base: 10, flowerScore: 5, cap: 100,
     difficulty: "easy", speed: "mid", font: "normal",
-    voice: true, timer: false, sound: true, counter: true
+    voice: true, timer: 0, sound: true, counter: true,
+    luck: "fair"
   };
   var game = null;
   var ui = {
@@ -1417,6 +1460,7 @@ html, body {
       }
     }
     game.players[d].hand.push(game.wall.shift());
+    biasStartingHand();
     for (var j = 0; j < 4; j++) {
       sortHand(game.players[j]);
       var h = game.players[j].hand;
@@ -1430,6 +1474,73 @@ html, body {
 
   function drawFront() { return game.wall.length ? game.wall.shift() : null; }
   function drawBack() { return game.wall.length ? game.wall.pop() : null; }
+
+  /* ── 牌运倾斜（只在「轻松」档、只对玩家生效）──
+     手法是和牌墙里的牌「交换」，牌张总数和牌墙长度都不变，
+     不会凭空造牌，也不会出现第五张同样的牌。 */
+  function numKeysOf(p) {
+    var a = [];
+    for (var i = 0; i < p.hand.length; i++) if (!isFlower(p.hand[i].key)) a.push(p.hand[i].key);
+    return a;
+  }
+
+  function biasStartingHand() {
+    if (!luck().bias || !game) return;
+    var p = game.players[0];
+    for (var pass = 0; pass < 3; pass++) {
+      var keys = numKeysOf(p);
+      if (!keys.length) return;
+      var cur = shantenOf(counts34(keys), 0);
+      if (cur <= 1) return;                    /* 已经够好了，别喂过头 */
+      /* 找手里最没用的一张 */
+      var worstIx = -1, worstV = -1;
+      for (var i = 0; i < p.hand.length; i++) {
+        if (isFlower(p.hand[i].key)) continue;
+        var v = isolateScore(p.hand[i].key, keys);
+        if (v > worstV) { worstV = v; worstIx = i; }
+      }
+      if (worstIx < 0) return;
+      var look = Math.min(12, game.wall.length);
+      var bestW = -1, bestS = cur;
+      for (var w = 0; w < look; w++) {
+        var wk = game.wall[w].key;
+        if (isFlower(wk)) continue;
+        var trial = keys.slice();
+        var ix = trial.indexOf(p.hand[worstIx].key);
+        if (ix < 0) continue;
+        trial[ix] = wk;
+        var s = shantenOf(counts34(trial), 0);
+        if (s < bestS) { bestS = s; bestW = w; }
+      }
+      if (bestW < 0) return;                   /* 换不动了就收手 */
+      var tmp = p.hand[worstIx];
+      p.hand[worstIx] = game.wall[bestW];
+      game.wall[bestW] = tmp;
+      sortHand(p);
+    }
+  }
+
+  /* 玩家摸牌时，从牌墙最前面 3 张里挑一张最有用的换到最前 */
+  function drawFrontFor(pi) {
+    if (pi === 0 && luck().bias && game.wall.length > 1) {
+      var p = game.players[0];
+      var keys = numKeysOf(p);
+      var look = Math.min(3, game.wall.length);
+      var bestI = 0, bestS = 99;
+      for (var i = 0; i < look; i++) {
+        var k = game.wall[i].key;
+        if (isFlower(k)) { bestI = i; break; }   /* 花牌白拿一花，也算好事 */
+        var s = shantenOf(counts34(keys.concat([k])), p.melds.length);
+        if (s < bestS) { bestS = s; bestI = i; }
+      }
+      if (bestI > 0) {
+        var t = game.wall[0];
+        game.wall[0] = game.wall[bestI];
+        game.wall[bestI] = t;
+      }
+    }
+    return drawFront();
+  }
 
   function still(g) { return g === gen && game && !game.over; }
 
@@ -1634,6 +1745,13 @@ html, body {
         for (var k in settings) if (s[k] != null) settings[k] = s[k];
       }
     } catch (e) {}
+    /* 旧存档迁移：倒计时曾是开关，难度曾叫 easy/hard */
+    if (settings.timer === true) settings.timer = 60;
+    else if (settings.timer === false) settings.timer = 0;
+    settings.timer = parseInt(settings.timer, 10) || 0;
+    if (DIFF_ALIAS[settings.difficulty]) settings.difficulty = DIFF_ALIAS[settings.difficulty];
+    if (!DIFF[settings.difficulty]) settings.difficulty = "rookie";
+    if (!LUCK[settings.luck]) settings.luck = "fair";
     applyFont();
   }
   function applyFont() {
@@ -1698,16 +1816,22 @@ html, body {
       rowNum("封顶", "cap", s.cap) +
       '<p class="set-hint">默认封顶 =（底数 + 3 × 花分值）× 4 = ' + capDefault(s.base, s.flowerScore) +
       '　<button type="button" class="icon-btn" id="cap-reset" style="min-width:auto;min-height:36px;padding:0 12px">按公式重算</button></p>' +
-      rowSeg("电脑难度", "difficulty",
-        [["rookie", "新手"], ["easy", "简单"], ["normal", "普通"], ["hard", "高手"]]) +
+      rowSeg("牌运", "luck", [["kind", "轻松"], ["fair", "公平"], ["hard", "硬核"]]) +
+      '<p class="set-hint">' + LUCK_HINT[settings.luck || "fair"] + "</p>" +
+      rowSeg("对手水平", "difficulty",
+        [["wild", "瞎打"], ["rookie", "新手"], ["normal", "普通"], ["master", "高手"]]) +
+      '<p class="set-hint">' + DIFF_HINT[settings.difficulty || "rookie"] + "</p>" +
       rowSeg("出牌速度", "speed",
         [["vslow", "很慢 3.5秒"], ["slow", "慢 2.5秒"], ["mid", "适中 1.8秒"],
          ["fast", "快 1.1秒"], ["vfast", "很快 0.6秒"]]) +
+      rowSeg("出牌倒计时", "timer",
+        [["0", "不限时"], ["120", "2分钟"], ["90", "90秒"], ["60", "60秒"],
+         ["45", "45秒"], ["30", "30秒"]]) +
       rowSeg("字体大小", "font", [["normal", "正常"], ["large", "大"], ["xlarge", "特大"]]) +
       rowSeg("语音播报", "voice", [["1", "开"], ["0", "关"]]) +
       rowSeg("牌桌音效", "sound", [["1", "开"], ["0", "关"]]) +
       rowSeg("剩余张数提示", "counter", [["1", "开"], ["0", "关"]]) +
-      rowSeg("出牌倒计时", "timer", [["0", "关闭"], ["1", "60秒"]]);
+      (luck().assist ? "" : '<p class="set-hint warn">硬核档下记牌和听牌提示一律关闭，要靠自己记。</p>');
     bindSettings();
   }
   function rowNum(label, key, val) {
@@ -1728,12 +1852,25 @@ html, body {
       '　单盘最多赢 ' + fmtMoney(wealth.bestWin) + '，最多输 ' + fmtMoney(wealth.worstLoss) + '</p>';
   }
 
-  var BOOL_SET = { voice: 1, timer: 1, sound: 1, counter: 1 };
+  var LUCK_HINT = {
+    kind: "起手和摸牌都朝你倾斜，只要不乱打基本都能赢。算分照旧，不掺水。",
+    fair: "完全随机洗牌，谁也不偏，最正的一副麻将。",
+    hard: "同样是随机洗牌，一样公平，但记牌和听牌提示全关，得自己记牌算张。"
+  };
+  var DIFF_HINT = {
+    wild:   "不太会打，基本见牌就丢，也很少碰杠。",
+    rookie: "会打，但常出错，该碰的经常放过。",
+    normal: "路子清楚，偶尔失误。",
+    master: "记牌、算进张、挑安全牌打。非常小心才赢得了。"
+  };
+  var BOOL_SET = { voice: 1, sound: 1, counter: 1 };
+  var NUM_SET = { timer: 1 };
   function rowSeg(label, key, opts) {
     var b = "";
     for (var i = 0; i < opts.length; i++) {
       var on = "";
       if (BOOL_SET[key]) on = (!!settings[key] === (opts[i][0] === "1")) ? " on" : "";
+      else if (NUM_SET[key]) on = (settings[key] === parseInt(opts[i][0], 10)) ? " on" : "";
       else on = settings[key] === opts[i][0] ? " on" : "";
       b += '<button type="button" data-seg="' + key + '" data-v="' + opts[i][0] + '" class="' + on.trim() + '">' + opts[i][1] + "</button>";
     }
@@ -1765,6 +1902,7 @@ html, body {
         var k2 = t.getAttribute("data-seg");
         var v = t.getAttribute("data-v");
         if (BOOL_SET[k2]) settings[k2] = v === "1";
+        else if (NUM_SET[k2]) settings[k2] = parseInt(v, 10) || 0;
         else settings[k2] = v;
         saveSettings(); renderSettings();
         if (k2 === "sound" && settings.sound) sfx("peng");
@@ -1883,7 +2021,7 @@ html, body {
     document.getElementById("hand").innerHTML = hh;
 
     var waits = [];
-    if (p.hand.length === 13 - 3 * p.melds.length) waits = waitingTiles(p);
+    if (luck().assist && p.hand.length === 13 - 3 * p.melds.length) waits = waitingTiles(p);
     var tb = document.getElementById("ting-bar");
     if (waits.length && !game.over) {
       var th = '<div class="t">听</div><div class="ting-tiles">';
@@ -1932,7 +2070,7 @@ html, body {
   /* 点一张手牌，告诉你这种牌还有几张没露面 —— 老人算牌的小抄 */
   function showTileCount(key) {
     var el = document.getElementById("tile-info");
-    if (!settings.counter || !key || !game) {
+    if (!settings.counter || !luck().assist || !key || !game) {
       el.textContent = ""; el.classList.remove("on"); return;
     }
     var p = game.players[0], mine = 0;
@@ -2062,7 +2200,7 @@ html, body {
   function startTimer(resolveDiscard) {
     clearTimer();
     if (!settings.timer) return;
-    timerLeft = 60;
+    timerLeft = settings.timer;
     setMsg("该你出牌了　" + timerLeft + "秒", true);
     timerId = setInterval(function () {
       if (ui.paused) return;
@@ -2474,6 +2612,51 @@ html, body {
     return h + "</div>";
   }
 
+  /* 摊牌：四家的手牌、副露、花牌全亮出来，谁差一张、谁在做什么牌一目了然 */
+  function showdownHTML(s) {
+    var winners = {};
+    for (var w = 0; w < (s.reports || []).length; w++) winners[s.reports[w].i] = 1;
+    var h = '<div class="block showdown"><h3>四家牌型</h3>';
+    for (var i = 0; i < 4; i++) {
+      var p = game.players[i];
+      var hand = p.hand.slice().filter(function (t) { return !isFlower(t.key); });
+      hand.sort(function (a, b) { return cmpKey(a.key, b.key); });
+
+      var tag = "";
+      if (winners[i]) tag = '<span class="sd-tag win">胡</span>';
+      else if (s.flags && s.flags.ron && s.flags.from === i) tag = '<span class="sd-tag lose">点炮</span>';
+      else if (s.flags && s.flags.robKong && s.flags.from === i) tag = '<span class="sd-tag lose">被抢杠</span>';
+
+      /* 没胡的人差几张 */
+      var note = "";
+      if (!winners[i] && s.type !== "eight") {
+        var need = 13 - 3 * p.melds.length;
+        var keys = [];
+        for (var q = 0; q < hand.length; q++) keys.push(hand[q].key);
+        if (keys.length >= need) {
+          var sh = shantenOf(counts34(keys.slice(0, need)), p.melds.length);
+          note = sh <= 0 ? '<span class="sd-note ting">已听牌</span>'
+                         : '<span class="sd-note">差 ' + sh + ' 张听牌</span>';
+        }
+      }
+
+      h += '<div class="sd-row' + (winners[i] ? " won" : "") + '">' +
+           '<div class="sd-head">' + (game.dealer === i ? '<span class="zhuang">庄</span>' : "") +
+           NAMES[i] + tag + note + "</div>" +
+           '<div class="sd-tiles">';
+      for (var t = 0; t < hand.length; t++) h += mjHTML(hand[t].key, { size: "sm" });
+      for (var m = 0; m < p.melds.length; m++) {
+        h += '<span class="sd-gap"></span>' + meldHTML(p.melds[m], "sm");
+      }
+      if (p.flowers.length) {
+        h += '<span class="sd-gap"></span>';
+        for (var f = 0; f < p.flowers.length; f++) h += mjHTML(p.flowers[f].key, { size: "sm" });
+      }
+      h += "</div></div>";
+    }
+    return h + "</div>";
+  }
+
   function showSettle() {
     var s = game.settle;
     var html = "";
@@ -2517,6 +2700,8 @@ html, body {
       var sign = d > 0 ? "+" : "";
       html += "<p class='pay " + cls + "'>" + NAMES[i2] + "：" + sign + d + "　累计 " + game.players[i2].score + "</p>";
     }
+    html += showdownHTML(s);
+
     var zmsg = game.nextDealer === game.dealer ? "庄家连庄（" + NAMES[game.dealer] + "）" : "下一盘由 " + NAMES[(game.dealer + 1) % 4] + " 坐庄";
     html += "<p>" + zmsg + "</p></div>";
     html += '<div class="home-btns" style="margin-top:12px">';
@@ -2614,6 +2799,117 @@ html, body {
     return seen;
   }
 
+  /* ══════════ 向听 / 进张 ══════════
+     KEYS34 的排列是 万0-8、条9-17、筒18-26、字27-33。
+     向听数 = 还差几张才听牌；0 已听牌，-1 已和牌。 */
+  function isNumIdx(i) { return i < 27; }
+
+  function shantenStd(cnt, nMelds) {
+    var best = 8;
+    function walk(i, melds, partials, pairUsed) {
+      while (i < 34 && cnt[i] === 0) i++;
+      if (i >= 34) {
+        var m = nMelds + melds, d = partials, pr = pairUsed ? 1 : 0;
+        /* 一副牌最多 5 个块：4 个面子 + 1 个雀头，多出来的搭子不算数 */
+        if (m + d + pr > 5) d = 5 - m - pr;
+        if (d < 0) d = 0;
+        var t = d + pr;
+        var s = 8 - 2 * m - t;
+        /* 五个块全是面子/搭子、一个雀头都没有，还得再多花一步做将 */
+        if (m + t === 5 && !pr) s += 1;
+        if (s < best) best = s;
+        return;
+      }
+      if (best <= -1) return;
+      if (cnt[i] >= 3) { cnt[i] -= 3; walk(i, melds + 1, partials, pairUsed); cnt[i] += 3; }
+      if (isNumIdx(i) && i % 9 <= 6 && cnt[i + 1] && cnt[i + 2]) {
+        cnt[i]--; cnt[i + 1]--; cnt[i + 2]--;
+        walk(i, melds + 1, partials, pairUsed);
+        cnt[i]++; cnt[i + 1]++; cnt[i + 2]++;
+      }
+      if (cnt[i] >= 2) {
+        if (!pairUsed) { cnt[i] -= 2; walk(i, melds, partials, true); cnt[i] += 2; }
+        cnt[i] -= 2; walk(i, melds, partials + 1, pairUsed); cnt[i] += 2;
+      }
+      if (isNumIdx(i) && i % 9 <= 7 && cnt[i + 1]) {
+        cnt[i]--; cnt[i + 1]--; walk(i, melds, partials + 1, pairUsed); cnt[i]++; cnt[i + 1]++;
+      }
+      if (isNumIdx(i) && i % 9 <= 6 && cnt[i + 2]) {
+        cnt[i]--; cnt[i + 2]--; walk(i, melds, partials + 1, pairUsed); cnt[i]++; cnt[i + 2]++;
+      }
+      cnt[i]--; walk(i, melds, partials, pairUsed); cnt[i]++;
+    }
+    walk(0, 0, 0, false);
+    return best;
+  }
+
+  function shantenQiDui(cnt, nMelds) {
+    if (nMelds !== 0) return 99;
+    var pairs = 0, kinds = 0;
+    for (var i = 0; i < 34; i++) {
+      if (cnt[i] >= 2) pairs++;
+      if (cnt[i] >= 1) kinds++;
+    }
+    var s = 6 - pairs;
+    if (kinds < 7) s += 7 - kinds;      /* 牌种不够，还得再摸新种类 */
+    return s;
+  }
+
+  function shantenOf(cnt, nMelds) {
+    var a = shantenStd(cnt, nMelds);
+    var b = shantenQiDui(cnt, nMelds);
+    return a < b ? a : b;
+  }
+
+  /* 进张：打出后还有多少张牌能让向听前进一步。
+     剩余张数扣掉牌河、副露里已经露面的（记牌），所以是真概率不是拍脑袋。 */
+  function ukeireOf(keys, nMelds) {
+    var cnt = counts34(keys);
+    var base = shantenOf(cnt, nMelds);
+    var total = 0, kinds = 0;
+    for (var i = 0; i < 34; i++) {
+      if (cnt[i] >= 4) continue;
+      cnt[i]++;
+      var s = shantenOf(cnt, nMelds);
+      cnt[i]--;
+      if (s < base) {
+        var left = 4 - knownCount(KEYS34[i]) - cnt[i];
+        if (left > 0) { total += left; kinds++; }
+      }
+    }
+    return { shanten: base, tiles: total, kinds: kinds };
+  }
+
+  /* 高手：先用形状启发式筛掉明显不该打的，再对候选做完整概率计算 */
+  function aiDiscardMaster(p) {
+    var keys = handKeys(p);
+    var cand = [];
+    for (var i = 0; i < p.hand.length; i++) {
+      var t = p.hand[i];
+      if (isFlower(t.key)) continue;
+      var rest0 = keys.slice();
+      rest0.splice(rest0.indexOf(t.key), 1);
+      cand.push({ t: t, rough: handEff(rest0, p) + isolateScore(t.key, keys) * 0.15, rest: rest0 });
+    }
+    if (!cand.length) return p.hand[p.hand.length - 1];
+    cand.sort(function (a, b) { return b.rough - a.rough; });
+    cand = cand.slice(0, 7);                 /* 只对前 7 个候选做重计算，省手机的电 */
+
+    var best = null, bestV = -1e18;
+    for (var j = 0; j < cand.length; j++) {
+      var c = cand[j];
+      var e = ukeireOf(c.rest, p.melds.length);
+      var v = -e.shanten * 100000 + e.tiles * 900 + e.kinds * 120;
+      /* 金坛特色：字牌刻子算花，成对的字牌别轻易拆 */
+      if (isHonor(c.t.key) && countKey(keys, c.t.key) === 2) v -= 4200;
+      /* 防守：照牌河打现物 */
+      v += safeScore(c.t.key) * 1500;
+      v += c.rough * 0.4;
+      if (v > bestV) { bestV = v; best = c.t; }
+    }
+    return best || p.hand[p.hand.length - 1];
+  }
+
   function aiWantPeng(p, key) {
     if (Math.random() < diff().sloppy) return false;
     var tmpKeys = handKeys(p);
@@ -2646,8 +2942,11 @@ html, body {
     if (Math.random() < d.sloppy) {
       var isol = p.hand.filter(function (t) { return isolateScore(t.key, keys) >= 80; });
       if (isol.length) return isol[Math.floor(Math.random() * isol.length)];
-      return p.hand[Math.floor(Math.random() * p.hand.length)];
+      var pick = p.hand.filter(function (t) { return !isFlower(t.key); });
+      if (!pick.length) pick = p.hand;
+      return pick[Math.floor(Math.random() * pick.length)];
     }
+    if (d.master) return aiDiscardMaster(p);
     for (var i = 0; i < candidates.length; i++) {
       var t = candidates[i];
       if (isFlower(t.key)) continue;
@@ -2698,7 +2997,7 @@ html, body {
       if (game.needDraw) {
         game.phase = "draw";
         if (!game.wall.length) { await liuju(); return; }
-        var t = drawFront();
+        var t = drawFrontFor(game.current);
         p.hand.push(t);
         p.lastDrawn = t.key;
         sfx("draw");
@@ -3082,8 +3381,12 @@ html, body {
   window.__jintanWealth = function () { return wealth; };
   window.__jintanAI = {
     setDiff: function (d) { settings.difficulty = d; },
-    discard: aiChooseDiscard, peng: aiWantPeng, gang: aiWantGang,
-    safe: safeScore, diff: diff
+    setLuck: function (l) { settings.luck = l; },
+    discard: aiChooseDiscard, master: aiDiscardMaster,
+    peng: aiWantPeng, gang: aiWantGang,
+    safe: safeScore, diff: diff, luck: luck,
+    shanten: function (keys, nMelds) { return shantenOf(counts34(keys), nMelds || 0); },
+    ukeire: ukeireOf
   };
 })();
 </script>
