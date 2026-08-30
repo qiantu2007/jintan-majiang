@@ -467,6 +467,11 @@ html, body {
 .center-info .big { font-size: calc(15px * var(--fs)); font-weight: 700; color: #ffe9a8; font-variant-numeric: tabular-nums; }
 
 .lp { display: flex; flex-direction: column; align-items: center; gap: calc(2px * var(--fs)); }
+.turn-of {
+  font-size: calc(11px * var(--fs)); font-weight: 700; color: var(--dim);
+  white-space: nowrap; margin-top: calc(1px * var(--fs));
+}
+.turn-of.me { color: #ffe06a; }
 .msg {
   font-size: calc(12px * var(--fs)); font-weight: 700; color: #d6e7d8;
   text-align: center; line-height: 1.35; max-width: calc(148px * var(--fs));
@@ -547,9 +552,48 @@ html, body {
 
 .my-flowers, .my-melds { display: flex; gap: calc(4px * var(--fs)); align-items: center; flex: none; }
 
-.claim, .act { display: flex; gap: calc(8px * var(--fs)); align-items: center; }
-.claim { display: none; }
+.act { display: flex; gap: calc(8px * var(--fs)); align-items: center; }
+
+/* 碰/杠/胡 浮在手牌正上方居中：位置固定不挤动布局，也比塞在角落显眼 */
+.claim {
+  display: none; position: absolute; z-index: 12;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--tw) * 1.36 + 18px);
+  gap: calc(10px * var(--fs)); align-items: center;
+  padding: calc(6px * var(--fs)) calc(10px * var(--fs));
+  background: rgba(4,28,16,.82);
+  border: 1px solid rgba(230,189,87,.4);
+  border-radius: calc(14px * var(--fs));
+  box-shadow: 0 6px 20px rgba(0,0,0,.55);
+}
 .claim.on { display: flex; }
+.claim .btn-hu, .claim .btn-gang, .claim .btn-peng, .claim .btn-pass {
+  min-width: calc(76px * var(--fs)); min-height: calc(48px * var(--fs));
+  font-size: calc(18px * var(--fs));
+}
+.btn-hint {
+  font: inherit; font-size: calc(15px * var(--fs)); font-weight: 700;
+  min-width: calc(58px * var(--fs)); min-height: calc(42px * var(--fs));
+  padding: 0 calc(12px * var(--fs));
+  border: none; border-radius: calc(9px * var(--fs)); cursor: pointer;
+  color: #123a26; letter-spacing: .06em;
+  background: linear-gradient(#e6f2e8, #b6d3bf);
+  box-shadow: 0 4px 0 #6d8a78, 0 5px 12px rgba(0,0,0,.34);
+  transition: transform .08s, box-shadow .08s;
+}
+.btn-hint:active { transform: translateY(3px); box-shadow: 0 1px 0 #6d8a78; }
+/* 被提示点名的那张牌 */
+.mj.hint {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 calc(var(--w) * -.08) 0 rgba(158,139,101,.4),
+    0 0 0 3px #4fd58a, 0 0 16px rgba(79,213,138,.75);
+  animation: hintPulse 1.1s ease-in-out infinite;
+}
+@keyframes hintPulse {
+  0%, 100% { transform: translateY(calc(var(--w) * -.24)); }
+  50%      { transform: translateY(calc(var(--w) * -.34)); }
+}
 
 .btn-hu, .btn-gang, .btn-peng, .btn-pass, .btn-play {
   font: inherit; font-size: calc(16px * var(--fs)); font-weight: 700;
@@ -574,15 +618,42 @@ html, body {
 }
 
 .hand {
-  display: flex; align-items: flex-end; justify-content: center;
-  gap: calc(2px * var(--fs)); flex: none;
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center;
+  gap: calc(2px * var(--fs)) calc(2px * var(--fs)); flex: none;
   min-height: calc(var(--tw) * 1.36 + 8px);
   padding-top: calc(var(--tw) * 0.16);
 }
 .hand .mj { cursor: pointer; }
 
 /* ══════════ 麻将牌 ══════════ */
-:root { --tw: clamp(28px, calc(var(--appw) / 15.6), 60px); }
+/* --tw 必须和 --tscale 声明在同一层，否则取不到 body 上改写的值 */
+body { --tscale: 1; --tw: clamp(28px, calc(var(--appw) / 15.6 * var(--tscale)), calc(58px * var(--tscale))); }
+/* 「大」档：牌放大约四分之一，手牌自动换成两行，牌桌相应收紧 */
+body[data-tsize="big"] { --tscale: 1.26; }
+body[data-tsize="big"] .rv-opp, body[data-tsize="big"] .rv-me { max-height: calc(var(--tw) * .5); }
+body[data-tsize="big"] .center-info { padding: calc(2px * var(--fs)) calc(7px * var(--fs)); }
+body[data-tsize="big"] .center-info .lab { font-size: calc(9.5px * var(--fs)); }
+body[data-tsize="big"] .mj.md { --w: calc(var(--tw) * .46); }
+body[data-tsize="big"] .mj.sm { --w: calc(var(--tw) * .3); }
+body[data-tsize="big"] .rack.h .tb { width: calc(11px * var(--fs)); height: calc(16px * var(--fs)); }
+body[data-tsize="big"] .rack.v .tb { width: calc(18px * var(--fs)); height: calc(6px * var(--fs)); }
+/* 手牌排成 7×2 放左边，操作和提示移到右边：横屏下这样才腾得出牌桌的高度 */
+body[data-tsize="big"] .me {
+  flex-direction: row-reverse; align-items: center;
+  gap: calc(10px * var(--fs));
+  padding-top: calc(5px * var(--fs));
+}
+body[data-tsize="big"] .hand {
+  flex: 0 0 auto; max-width: calc(var(--tw) * 7.5); padding-top: 0;
+}
+body[data-tsize="big"] .me-bar {
+  flex: 1; min-width: 0;
+  flex-direction: column; align-items: flex-start;
+  gap: calc(7px * var(--fs)); min-height: 0;
+}
+body[data-tsize="big"] .me-left { flex-wrap: wrap; overflow: visible; width: 100%; }
+body[data-tsize="big"] .me-right { align-self: stretch; justify-content: flex-end; }
+body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50%, -50%); }
 
 .mj {
   --w: var(--tw);
@@ -877,6 +948,14 @@ html, body {
       </ul>
       <h3>手机怎么拿</h3>
       <p>这个游戏是<strong>横屏</strong>的。手机竖着拿也能玩，画面会自动横过来，把手机转成横的就正了。</p>
+      <h3>几个省事的小操作</h3>
+      <ul>
+        <li>不知道打哪张，点<strong>「提示」</strong>，会把该打的那张牌用绿框圈出来，并告诉你为什么。</li>
+        <li><strong>双击一张牌</strong>就直接打出去了，不用再点「打出」。</li>
+        <li>点一下手牌，会告诉你这种牌一共还剩几张没出现。</li>
+        <li>打牌时屏幕不会自己变黑，可以慢慢想。</li>
+        <li>牌看不清就去设置里把<strong>「牌面大小」</strong>调成「大」，牌会变大、排成两行。</li>
+      </ul>
     </div>
   </section>
 
@@ -961,8 +1040,17 @@ html, body {
 (function () {
   "use strict";
 
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
   var CHANGELOG = [
+    { v: "1.6.0", d: "2026-08-31", items: [
+      "打牌时屏幕保持常亮，不会想一想就黑屏",
+      "加了「提示」按钮，不知道打哪张时点一下，会指出该打的牌并说明理由",
+      "双击一张牌可以直接打出，不用再点「打出」",
+      "碰 / 杠 / 胡 的按钮改到手牌正上方居中，更大更好按，也不再挤动画面",
+      "加了「牌面大小」，选「大」牌会放大约四分之一、手牌排成两行",
+      "碰杠胡时手机会轻轻震一下（安卓）",
+      "牌桌中间会写明轮到谁出牌"
+    ] },
     { v: "1.5.0", d: "2026-08-31", items: [
       "难度拆成「牌运」和「对手水平」两个独立档位",
       "牌运分轻松 / 公平 / 硬核，硬核档关掉记牌和听牌提示，得自己记",
@@ -1065,7 +1153,7 @@ html, body {
     base: 10, flowerScore: 5, cap: 100,
     difficulty: "easy", speed: "mid", font: "normal",
     voice: true, timer: 0, sound: true, counter: true,
-    luck: "fair"
+    luck: "fair", vibrate: true, awake: true, tsize: "std"
   };
   var game = null;
   var ui = {
@@ -1817,7 +1905,40 @@ html, body {
     o.connect(g); g.connect(a.destination);
     o.start(t); o.stop(t + dur + 0.02);
   }
+  /* ── 屏幕常亮 ──
+     老人一张牌能想半分钟，屏幕自己灭掉最烦人。进牌桌时锁住，离开就放开。
+     系统会在切后台时自动释放，所以回前台要重新申请。 */
+  var wakeLock = null;
+  function keepAwake(on) {
+    try {
+      if (!("wakeLock" in navigator)) return;
+      if (on) {
+        if (wakeLock) return;
+        navigator.wakeLock.request("screen").then(function (l) {
+          wakeLock = l;
+          l.addEventListener("release", function () { wakeLock = null; });
+        }).catch(function () { wakeLock = null; });
+      } else if (wakeLock) {
+        wakeLock.release().catch(function () {});
+        wakeLock = null;
+      }
+    } catch (e) { wakeLock = null; }
+  }
+
+  /* ── 震动 ──（安卓有效，iOS 的浏览器不支持，静默跳过） */
+  function buzz(pattern) {
+    if (!settings.vibrate || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  var BUZZ = {
+    discard: 12, draw: 0, flower: [0, 18, 60, 18],
+    peng: [0, 26, 55, 26], gang: [0, 26, 50, 26, 50, 40],
+    turn: [0, 20, 90, 20], hu: [0, 55, 60, 55, 60, 130], lose: [0, 90]
+  };
+
   function sfx(kind) {
+    if (BUZZ[kind]) buzz(BUZZ[kind]);
     if (!settings.sound) return;
     try {
       if (kind === "draw") clack(0.16, 1500, 0.045);
@@ -1868,6 +1989,7 @@ html, body {
   }
   function applyFont() {
     document.body.setAttribute("data-font", settings.font === "large" ? "large" : settings.font === "xlarge" ? "xlarge" : "normal");
+    document.body.setAttribute("data-tsize", settings.tsize === "big" ? "big" : "std");
   }
   function saveGame() {
     if (!game || game.over) {
@@ -1909,6 +2031,7 @@ html, body {
     if (name === "home") refreshHome();
     if (name === "set") renderSettings();
     if (name === "about") renderAbout();
+    keepAwake(name === "table" && settings.awake);
   }
 
   function refreshHome() {
@@ -1996,9 +2119,12 @@ html, body {
       rowSeg("出牌倒计时", "timer",
         [["0", "不限时"], ["120", "2分钟"], ["90", "90秒"], ["60", "60秒"],
          ["45", "45秒"], ["30", "30秒"]]) +
+      rowSeg("牌面大小", "tsize", [["std", "标准"], ["big", "大（两行）"]]) +
       rowSeg("字体大小", "font", [["normal", "正常"], ["large", "大"], ["xlarge", "特大"]]) +
+      rowSeg("打牌时屏幕常亮", "awake", [["1", "开"], ["0", "关"]]) +
       rowSeg("语音播报", "voice", [["1", "开"], ["0", "关"]]) +
       rowSeg("牌桌音效", "sound", [["1", "开"], ["0", "关"]]) +
+      rowSeg("震动反馈", "vibrate", [["1", "开"], ["0", "关"]]) +
       rowSeg("剩余张数提示", "counter", [["1", "开"], ["0", "关"]]) +
       (luck().assist ? "" : '<p class="set-hint warn">硬核档下记牌和听牌提示一律关闭，要靠自己记。</p>');
     bindSettings();
@@ -2032,7 +2158,7 @@ html, body {
     normal: "路子清楚，偶尔失误。",
     master: "记牌、算进张、挑安全牌打。非常小心才赢得了。"
   };
-  var BOOL_SET = { voice: 1, sound: 1, counter: 1 };
+  var BOOL_SET = { voice: 1, sound: 1, counter: 1, vibrate: 1, awake: 1 };
   var NUM_SET = { timer: 1 };
   function rowSeg(label, key, opts) {
     var b = "";
@@ -2075,6 +2201,8 @@ html, body {
         else settings[k2] = v;
         saveSettings(); renderSettings();
         if (k2 === "sound" && settings.sound) sfx("peng");
+        if (k2 === "vibrate" && settings.vibrate) buzz([0, 26, 55, 26]);
+        if (k2 === "awake") keepAwake(!!settings.awake && ui.screen === "table");
       }
     };
   }
@@ -2141,6 +2269,11 @@ html, body {
     } else {
       ci = '<div class="lab">庄家</div><div class="big">' + NAMES[game.dealer] + "</div>";
     }
+    /* 轮到电脑时写明是哪一家在想，省得盯着找高亮。
+       轮到自己时不写——下面已经有一行金色的「该你出牌了」，别重复。 */
+    if (!game.over && game.current !== 0) {
+      ci += '<div class="turn-of">轮到 ' + NAMES[game.current] + "</div>";
+    }
     document.getElementById("last-play").innerHTML = ci;
 
     var html = "";
@@ -2184,7 +2317,8 @@ html, body {
     for (var t = 0; t < p.hand.length; t++) {
       var tile = p.hand[t];
       var one = mjHTML(tile.key, { id: tile.id, sel: ui.selected === tile.id });
-      if (t === freshAt && ui.selected !== tile.id) one = one.replace('class="mj', 'class="mj fresh');
+      if (ui.hintId === tile.id) one = one.replace('class="mj', 'class="mj hint');
+      else if (t === freshAt && ui.selected !== tile.id) one = one.replace('class="mj', 'class="mj fresh');
       hh += one;
     }
     document.getElementById("hand").innerHTML = hh;
@@ -2231,9 +2365,23 @@ html, body {
     var id = parseInt(el.getAttribute("data-id"), 10);
     if (ui.selected === id) ui.selected = null;
     else ui.selected = id;
+    ui.hintId = null;
     showTileCount(ui.selected == null ? null : el.getAttribute("data-key"));
     renderMe();
     refreshActBar();
+  });
+
+  /* 双击一张牌 = 直接打出。单击选牌再点「打出」的老路子照旧留着，
+     不熟的人用两步更保险，熟了的人少点一半。 */
+  document.getElementById("hand").addEventListener("dblclick", function (e) {
+    var el = e.target.closest(".mj");
+    if (!el || el.classList.contains("back")) return;
+    if (!game || game.over || ui.paused) return;
+    if (game.current !== 0 || ui.claimWait || !ui.discardWait) return;
+    var id = parseInt(el.getAttribute("data-id"), 10);
+    if (isNaN(id)) return;
+    ui.selected = id;
+    onHumanPlay();
   });
 
   /* 点一张手牌，告诉你这种牌还有几张没露面 —— 老人算牌的小抄 */
@@ -2250,6 +2398,33 @@ html, body {
     el.classList.add("on");
   }
 
+  /* 提示：拿高手 AI 当教练，告诉她该打哪张、打了之后有什么好处。
+     硬核档下不给提示，跟记牌/听牌提示一个道理。 */
+  function giveHint() {
+    if (!game || game.over || game.current !== 0 || ui.claimWait) return;
+    var p = game.players[0];
+    var t;
+    try { t = aiDiscardMaster(p); } catch (e) { t = null; }
+    if (!t) { toast("这手牌暂时没什么好建议"); return; }
+    var keys = handKeys(p).filter(function (k) { return !isFlower(k); });
+    var rest = keys.slice();
+    var ix = rest.indexOf(t.key);
+    if (ix >= 0) rest.splice(ix, 1);
+    var e = ukeireOf(rest, p.melds.length);
+    var msg;
+    if (e.shanten <= 0) msg = "打「" + tileName(t.key) + "」就听牌了";
+    else if (e.tiles > 0) msg = "建议打「" + tileName(t.key) + "」，还有 " + e.tiles + " 张牌能让你更近一步";
+    else msg = "建议打「" + tileName(t.key) + "」";
+    ui.hintId = t.id;
+    ui.selected = t.id;                 /* 顺手替她选上，点「打出」即可 */
+    renderMe();
+    refreshActBar();
+    var el = document.getElementById("tile-info");
+    el.innerHTML = msg;
+    el.classList.add("on");
+    sfx("turn");
+  }
+
   function refreshActBar() {
     if (!game || game.over || ui.claimWait || game.current !== 0) {
       if (!ui.claimWait) setAct("");
@@ -2262,6 +2437,9 @@ html, body {
     }
     var gangs = game.wall.length ? possibleGangs(p) : [];
     if (gangs.length) btns += '<button type="button" class="btn-gang pop" id="a-gang">杠</button>';
+    if (luck().assist && ui.discardWait) {
+      btns += '<button type="button" class="btn-hint" id="a-hint">提示</button>';
+    }
     btns += '<button type="button" class="btn-play" id="a-play">打出</button>';
     setAct(btns);
   }
@@ -2271,6 +2449,7 @@ html, body {
     if (id === "a-play") onHumanPlay();
     else if (id === "a-hu") onHumanSelfHu();
     else if (id === "a-gang") onHumanGang();
+    else if (id === "a-hint") giveHint();
   });
 
   document.getElementById("claim").addEventListener("click", function (e) {
@@ -2356,6 +2535,7 @@ html, body {
   function waitHumanDiscard() {
     return new Promise(function (resolve) {
       ui.selected = null;
+      ui.hintId = null;
       showTileCount(null);
       ui.discardWait = resolve;
       setMsg("该你出牌了", true);
@@ -3581,7 +3761,10 @@ html, body {
   checkVersion();
   /* 从后台切回来时再查一次（她可能几天不关这个页面） */
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) checkVersion();
+    if (document.hidden) return;
+    checkVersion();
+    /* 切后台时系统会释放屏幕常亮，回来要重新申请 */
+    if (ui.screen === "table" && settings.awake) keepAwake(true);
   });
   var fails = selfTest();
   if (fails.length) console.warn("金坛麻将自测失败:", fails);
