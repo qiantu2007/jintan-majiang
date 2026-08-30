@@ -187,6 +187,120 @@ html, body {
   100% { box-shadow: 0 0 0 0 rgba(193,16,43,0); }
 }
 
+/* ══════════ 「我的」 ══════════ */
+.mine-top {
+  background: rgba(4,32,18,.55);
+  border: 1px solid rgba(230,189,87,.36);
+  border-radius: calc(12px * var(--fs));
+  padding: calc(12px * var(--fs)) calc(16px * var(--fs));
+  text-align: center; margin-bottom: calc(6px * var(--fs));
+}
+.mt-rank {
+  display: inline-block; font-weight: 700; letter-spacing: .1em;
+  font-size: calc(14px * var(--fs)); color: #4a2f06;
+  background: linear-gradient(#f5d98a, #d3a72c);
+  border-radius: 999px; padding: calc(2px * var(--fs)) calc(16px * var(--fs));
+}
+.mine-top.neg .mt-rank { color: #fff; background: linear-gradient(#f0565f, #b3121f); }
+.mt-num {
+  font-size: calc(38px * var(--fs)); font-weight: 700; color: #ffe9a8;
+  font-variant-numeric: tabular-nums; line-height: 1.2;
+  text-shadow: 0 2px 0 rgba(0,0,0,.35);
+}
+.mine-top.neg .mt-num { color: #ff9a92; }
+.mt-note { font-size: calc(12.5px * var(--fs)); color: var(--dim); }
+.mt-bar {
+  height: calc(8px * var(--fs)); border-radius: 999px;
+  background: rgba(0,0,0,.35); overflow: hidden;
+  margin: calc(9px * var(--fs)) auto calc(5px * var(--fs)); max-width: 26rem;
+}
+.mt-bar i { display: block; height: 100%; background: linear-gradient(90deg, #d3a72c, #ffe9a8); }
+.mt-next { font-size: calc(12.5px * var(--fs)); color: #cfe0d2; }
+
+.stat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: calc(7px * var(--fs));
+}
+.stat {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  border-radius: calc(8px * var(--fs)); padding: calc(7px * var(--fs)) calc(10px * var(--fs));
+}
+.stat .sk { font-size: calc(11.5px * var(--fs)); color: #9fb8a4; }
+.stat .sv {
+  font-size: calc(18px * var(--fs)); font-weight: 700; color: #ffe9a8;
+  font-variant-numeric: tabular-nums;
+}
+
+.ladder { display: flex; flex-direction: column; gap: calc(3px * var(--fs)); }
+.lad-row {
+  display: flex; align-items: baseline; gap: calc(10px * var(--fs)); flex-wrap: wrap;
+  padding: calc(6px * var(--fs)) calc(11px * var(--fs));
+  border-radius: calc(7px * var(--fs));
+  background: rgba(255,255,255,.04); opacity: .55;
+}
+.lad-row.done { opacity: .85; }
+.lad-row.done .lad-n::after { content: " ✓"; color: #6fd08e; }
+.lad-row.now {
+  opacity: 1; background: linear-gradient(90deg, rgba(230,189,87,.28), rgba(230,189,87,.08));
+  border: 1px solid rgba(230,189,87,.5);
+}
+.lad-n { font-weight: 700; font-size: calc(15px * var(--fs)); color: #ffe9a8; min-width: 3.6em; }
+.lad-m {
+  font-family: ui-monospace, Consolas, monospace; font-size: calc(12.5px * var(--fs));
+  color: #cfe0d2; font-variant-numeric: tabular-nums; min-width: 6.5em;
+}
+.lad-note { font-size: calc(12px * var(--fs)); color: #8fa894; }
+
+.hist { display: flex; flex-direction: column; gap: calc(2px * var(--fs)); }
+.hrow {
+  display: flex; align-items: center; gap: calc(9px * var(--fs)); flex-wrap: wrap;
+  padding: calc(8px * var(--fs)) calc(11px * var(--fs));
+  border-radius: calc(7px * var(--fs)); cursor: pointer;
+  background: rgba(255,255,255,.05);
+  border-left: 3px solid transparent;
+}
+.hrow:hover { background: rgba(255,255,255,.09); }
+.hrow.win  { border-left-color: #3fbc78; }
+.hrow.lose { border-left-color: #e2716b; }
+.hrow.flat { border-left-color: #8fa894; }
+.hrow.open { background: rgba(230,189,87,.14); }
+.hrow.open .h-more { transform: rotate(180deg); }
+.h-when {
+  font-family: ui-monospace, Consolas, monospace; font-size: calc(11.5px * var(--fs));
+  color: #8fa894; min-width: 5.6em;
+}
+.h-tag { font-size: calc(13.5px * var(--fs)); font-weight: 700; color: #e8f0e6; flex: 1; min-width: 6em; }
+.h-delta {
+  font-size: calc(15px * var(--fs)); font-weight: 700;
+  font-variant-numeric: tabular-nums; min-width: 3.6em; text-align: right; color: #9fb8a4;
+}
+.h-delta.up { color: #6fd08e; }
+.h-delta.down { color: #ff9a92; }
+.h-w { font-size: calc(12px * var(--fs)); color: #9fb8a4; font-variant-numeric: tabular-nums; min-width: 6em; }
+.h-more { color: var(--brass); font-size: calc(13px * var(--fs)); transition: transform .18s; }
+
+.hdetail { display: none; }
+.hdetail.on {
+  display: block;
+  background: linear-gradient(#fdf8ec, #efe4cc); color: #2a1f10;
+  border-radius: calc(8px * var(--fs));
+  padding: calc(10px * var(--fs)) calc(12px * var(--fs));
+  margin: calc(3px * var(--fs)) 0 calc(8px * var(--fs));
+}
+.rp-block { margin-bottom: calc(8px * var(--fs)); }
+.rp-h {
+  font-weight: 700; font-size: calc(14px * var(--fs)); color: #7a3e0d;
+  border-bottom: 1px solid rgba(122,62,13,.22);
+  padding-bottom: calc(2px * var(--fs)); margin-bottom: calc(4px * var(--fs));
+}
+/* 复盘卡是米色底，得压过面板那套浅色文字 */
+#mine-body .hdetail p,
+#mine-body .hdetail li { font-size: calc(13px * var(--fs)); color: #3a2c18; line-height: 1.65; margin: 0; }
+#mine-body .hdetail b { color: #1d1408; }
+#mine-body .hdetail .sd-head { color: #3a2c18; }
+#mine-body .hdetail .sd-note { color: #7a6a4e; }
+.mine-empty { color: #9fb8a4; font-size: calc(13px * var(--fs)); }
+
 /* 更新记录 */
 .log-item {
   border-left: 2px solid rgba(230,189,87,.35);
@@ -230,7 +344,7 @@ html, body {
 .big-btn:focus-visible, .icon-btn:focus-visible, .mini-btn:focus-visible { outline: 3px solid #ffe08a; outline-offset: 2px; }
 
 /* ══════════ 说明 / 设置面板 ══════════ */
-#sc-help, #sc-set, #sc-about { flex-direction: column; background: linear-gradient(#123f28, #0a2b1b); }
+#sc-help, #sc-set, #sc-about, #sc-mine { flex-direction: column; background: linear-gradient(#123f28, #0a2b1b); }
 .panel-top {
   display: flex; align-items: center; justify-content: space-between;
   padding: calc(8px * var(--fs)) calc(14px * var(--fs));
@@ -876,10 +990,20 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       <button class="big-btn hidden" id="btn-continue" type="button">继续游戏</button>
       <button class="big-btn" id="btn-start" type="button">开始游戏</button>
       <button class="big-btn ghost" id="btn-help" type="button">怎么玩</button>
+      <button class="big-btn ghost" id="btn-mine" type="button">我的</button>
       <button class="big-btn alt" id="btn-set" type="button">设置</button>
       <button class="big-btn alt" id="btn-about" type="button">帮助</button>
     </div>
     <div class="ver-badge" id="ver-badge"></div>
+  </section>
+
+  <!-- ══════════ 我的 ══════════ -->
+  <section class="screen" id="sc-mine">
+    <div class="panel-top">
+      <h2>我的</h2>
+      <button class="icon-btn" type="button" data-go="back">返回</button>
+    </div>
+    <div class="scroll help" id="mine-body"></div>
   </section>
 
   <!-- ══════════ 帮助 ══════════ -->
@@ -1040,8 +1164,15 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 (function () {
   "use strict";
 
-  var VERSION = "1.6.0";
+  var VERSION = "1.7.0";
   var CHANGELOG = [
+    { v: "1.7.0", d: "2026-08-31", items: [
+      "首页加了「我的」：身家、称号、战绩、历史牌局都在里面",
+      "可以复盘：点历史里的任意一盘，能看到当时四家的牌和算分明细",
+      "称号从 7 个加到 11 个，多了新丁、名家、大师、宗师",
+      "称号之间的身家差距拉大了，越往上越难爬（开局仍是「熟手」，不会降级）",
+      "「我的」里能看到完整的称号阶梯和各自门槛"
+    ] },
     { v: "1.6.0", d: "2026-08-31", items: [
       "打牌时屏幕保持常亮，不会想一想就黑屏",
       "加了「提示」按钮，不知道打哪张时点一下，会指出该打的牌并说明理由",
@@ -1778,14 +1909,20 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
      只记玩家自己，三个电脑对手仍然用本局累计分。 */
   var WEALTH_KEY = "jintan_mj_wealth_v1";
   var START_WEALTH = 2000;
+  /* 称号阶梯：门槛逐级拉开（800 / 1200 / 2500 / 3500 / 5000 / 7000 / 10000 / 15000 / 25000），
+     越往上越难爬，够打很久。开局 2000 正好是「熟手」，跟老版本对得上，不会平白降级。 */
   var RANKS = [
-    { min: -Infinity, name: "欠账" },
-    { min: 0,         name: "学徒" },
-    { min: 1500,      name: "熟手" },
-    { min: 3000,      name: "老手" },
-    { min: 5000,      name: "好手" },
-    { min: 8000,      name: "高手" },
-    { min: 12000,     name: "牌王" }
+    { min: -Infinity, name: "欠账", note: "先把窟窿填上" },
+    { min: 0,         name: "新丁", note: "刚上桌" },
+    { min: 800,       name: "学徒", note: "会打了" },
+    { min: 2000,      name: "熟手", note: "开局就在这儿" },
+    { min: 4500,      name: "老手", note: "牌路清楚了" },
+    { min: 8000,      name: "好手", note: "赢多输少" },
+    { min: 13000,     name: "高手", note: "会算牌了" },
+    { min: 20000,     name: "名家", note: "麻将馆里有名号" },
+    { min: 30000,     name: "大师", note: "少有对手" },
+    { min: 45000,     name: "宗师", note: "打遍金坛" },
+    { min: 70000,     name: "牌王", note: "封顶了" }
   ];
   var wealth = null;
 
@@ -1847,7 +1984,68 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       before: before, after: wealth.w, delta: delta,
       rankBefore: rankOf(before).name, rankAfter: rankOf(wealth.w).name
     };
+    recordRound(s, s.wealthResult);
     return s.wealthResult;
+  }
+
+  /* ══════════ 牌谱 ══════════
+     每盘结束存一条，供「我的」里翻历史和复盘。只留最近 60 盘，
+     一条约 600 字节，占不了多少地方。 */
+  var LOG_KEY = "jintan_mj_log_v1";
+  var LOG_MAX = 60;
+
+  function loadLog() {
+    try {
+      var a = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+      return Object.prototype.toString.call(a) === "[object Array]" ? a : [];
+    } catch (e) { return []; }
+  }
+  function saveLog(a) {
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(a)); } catch (e) {}
+  }
+  function clearLog() { try { localStorage.removeItem(LOG_KEY); } catch (e) {} }
+
+  /* 把一盘压成尽量小的记录 */
+  function recordRound(s, wr) {
+    try {
+      var hands = [];
+      for (var i = 0; i < 4; i++) {
+        var p = game.players[i];
+        var hk = [];
+        for (var q = 0; q < p.hand.length; q++) {
+          if (!isFlower(p.hand[q].key)) hk.push(p.hand[q].key);
+        }
+        hk.sort(cmpKey);
+        var ms = [];
+        for (var m = 0; m < p.melds.length; m++) {
+          ms.push({ k: p.melds[m].key, t: p.melds[m].type, c: p.melds[m].concealed ? 1 : 0 });
+        }
+        var fs = [];
+        for (var f = 0; f < p.flowers.length; f++) fs.push(p.flowers[f].key);
+        hands.push({ h: hk, m: ms, f: fs, sc: p.score });
+      }
+      var rep = [];
+      for (var r = 0; r < (s.reports || []).length; r++) {
+        var rp = s.reports[r], info = rp.info || {};
+        rep.push({
+          i: rp.i, way: rp.way, score: rp.score,
+          fl: info.flowers, fli: info.flowerItems || [],
+          fans: info.fans || [], fan: info.fan, mult: info.mult,
+          fm: info.formula
+        });
+      }
+      var rec = {
+        t: Date.now(), r: game.round, type: s.type, d: game.dealer,
+        delta: wr.delta, w: wr.after, rk: wr.rankAfter,
+        from: (s.flags && (s.flags.ron || s.flags.robKong)) ? s.flags.from : null,
+        rob: !!(s.flags && s.flags.robKong),
+        pays: s.pays.slice(), rep: rep, hands: hands
+      };
+      var log = loadLog();
+      log.unshift(rec);
+      if (log.length > LOG_MAX) log.length = LOG_MAX;
+      saveLog(log);
+    } catch (e) {}
   }
 
   function renderWealthCard() {
@@ -2025,12 +2223,13 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   function showScreen(name) {
     ui.prevScreen = ui.screen;
     ui.screen = name;
-    ["home", "help", "set", "about", "table"].forEach(function (s) {
+    ["home", "help", "set", "about", "mine", "table"].forEach(function (s) {
       document.getElementById("sc-" + s).classList.toggle("on", s === name);
     });
     if (name === "home") refreshHome();
     if (name === "set") renderSettings();
     if (name === "about") renderAbout();
+    if (name === "mine") renderMine();
     keepAwake(name === "table" && settings.awake);
   }
 
@@ -2063,6 +2262,148 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       h += "</ul></div>";
     }
     document.getElementById("about-body").innerHTML = h;
+  }
+
+  /* ══════════ 「我的」页 ══════════ */
+  function rankIndexOf(w) {
+    var ix = 0;
+    for (var i = 0; i < RANKS.length; i++) if (w >= RANKS[i].min) ix = i;
+    return ix;
+  }
+
+  function renderMine() {
+    var w = wealth, ix = rankIndexOf(w.w), r = RANKS[ix], nx = RANKS[ix + 1];
+    var h = "";
+
+    /* 顶部：身家 + 称号 + 到下一级的进度 */
+    h += '<div class="mine-top' + (w.w < 0 ? " neg" : "") + '">' +
+         '<div class="mt-rank">' + r.name + "</div>" +
+         '<div class="mt-num">' + fmtMoney(w.w) + "</div>" +
+         '<div class="mt-note">' + r.note + "</div>";
+    if (nx) {
+      var lo = (r.min === -Infinity) ? 0 : r.min;
+      var span = nx.min - lo;
+      var got = Math.max(0, Math.min(span, w.w - lo));
+      var pct = span > 0 ? Math.round(got / span * 100) : 0;
+      h += '<div class="mt-bar"><i style="width:' + pct + '%"></i></div>' +
+           '<div class="mt-next">离「' + nx.name + "」还差 " + fmtMoney(nx.min - w.w) + " 分</div>";
+    } else {
+      h += '<div class="mt-next">已经封顶，没有更高的了</div>';
+    }
+    h += "</div>";
+
+    /* 战绩 */
+    var rate = w.rounds ? Math.round(w.wins / w.rounds * 100) : 0;
+    h += '<h3>战绩</h3><div class="stat-grid">' +
+      statCell("打了", w.rounds + " 盘") +
+      statCell("胡牌", w.wins + " 盘") +
+      statCell("胡牌率", rate + "%") +
+      statCell("自摸", w.selfDraws + " 次") +
+      statCell("最高身家", fmtMoney(w.peak)) +
+      statCell("最低身家", fmtMoney(w.low)) +
+      statCell("单盘最多赢", fmtMoney(w.bestWin)) +
+      statCell("单盘最多输", fmtMoney(w.worstLoss)) +
+      "</div>";
+
+    /* 称号阶梯 */
+    h += '<h3>称号一览</h3><div class="ladder">';
+    for (var i = RANKS.length - 1; i >= 0; i--) {
+      var q = RANKS[i];
+      var cls = i === ix ? " now" : (w.w >= q.min ? " done" : "");
+      h += '<div class="lad-row' + cls + '">' +
+           '<span class="lad-n">' + q.name + "</span>" +
+           '<span class="lad-m">' + (q.min === -Infinity ? "身家为负" : fmtMoney(q.min) + " 起") + "</span>" +
+           '<span class="lad-note">' + q.note + "</span></div>";
+    }
+    h += "</div>";
+
+    /* 历史 + 复盘 */
+    var log = loadLog();
+    h += '<h3>最近的牌局' + (log.length ? "（点一盘可以复盘）" : "") + "</h3>";
+    if (!log.length) {
+      h += '<p class="mine-empty">还没有记录，打完一盘就会出现在这里。</p>';
+    } else {
+      h += '<div class="hist">';
+      for (var k = 0; k < log.length; k++) h += histRow(log[k], k);
+      h += "</div>";
+      h += '<p class="mine-empty">只保留最近 ' + LOG_MAX + ' 盘。' +
+           '<button type="button" class="icon-btn danger" id="log-clear" ' +
+           'style="min-width:auto;min-height:34px;padding:0 12px">清空记录</button></p>';
+    }
+    document.getElementById("mine-body").innerHTML = h;
+  }
+
+  function statCell(k, v) {
+    return '<div class="stat"><div class="sk">' + k + '</div><div class="sv">' + v + "</div></div>";
+  }
+
+  function histRow(rec, ix) {
+    var mine = rec.rep && rec.rep.filter(function (x) { return x.i === 0; })[0];
+    var tag, cls;
+    if (rec.type === "liuju") { tag = "流局"; cls = "flat"; }
+    else if (mine) { tag = "我胡了 · " + mine.way; cls = "win"; }
+    else if (rec.from === 0) { tag = "我点炮"; cls = "lose"; }
+    else { tag = "别人胡"; cls = "lose"; }
+
+    var d = new Date(rec.t);
+    var when = (d.getMonth() + 1) + "/" + d.getDate() + " " +
+               ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    var sign = rec.delta > 0 ? "+" : "";
+    var dcls = rec.delta > 0 ? "up" : rec.delta < 0 ? "down" : "";
+
+    return '<div class="hrow ' + cls + '" data-log="' + ix + '">' +
+      '<span class="h-when">' + when + "</span>" +
+      '<span class="h-tag">' + tag + "</span>" +
+      '<span class="h-delta ' + dcls + '">' + sign + fmtMoney(rec.delta) + "</span>" +
+      '<span class="h-w">身家 ' + fmtMoney(rec.w) + "</span>" +
+      '<span class="h-more">▾</span></div>' +
+      '<div class="hdetail" id="hd-' + ix + '"></div>';
+  }
+
+  /* 复盘：把当时四家的牌摊出来，加上算分明细 */
+  function replayHTML(rec) {
+    var h = "";
+    for (var r = 0; r < (rec.rep || []).length; r++) {
+      var x = rec.rep[r];
+      h += '<div class="rp-block"><div class="rp-h">' + NAMES[x.i] + " 胡了 · " + x.way + "</div>";
+      if (x.fli && x.fli.length) {
+        var fl = [];
+        for (var i = 0; i < x.fli.length; i++) fl.push(x.fli[i].name + " " + x.fli[i].n);
+        h += "<p>花：" + fl.join("、") + "　合计 <b>" + x.fl + " 花</b></p>";
+      } else h += "<p>没有花</p>";
+      if (x.fans && x.fans.length) {
+        var fa = [];
+        for (var j = 0; j < x.fans.length; j++) fa.push(x.fans[j].name + " " + x.fans[j].n + " 番");
+        h += "<p>番：" + fa.join("、") + "　合计 <b>" + x.fan + " 番</b>，权值 ×" + x.mult + "</p>";
+      } else h += "<p>鸡胡，没有番</p>";
+      h += "<p>计分 " + x.fm + "</p></div>";
+    }
+    if (rec.type === "liuju") h += '<div class="rp-block"><div class="rp-h">流局，荒庄</div></div>';
+
+    h += '<div class="rp-block"><div class="rp-h">当时四家的牌</div>';
+    for (var p = 0; p < 4; p++) {
+      var hd = rec.hands[p];
+      var won = rec.rep && rec.rep.some(function (y) { return y.i === p; });
+      var mark = won ? '<span class="sd-tag win">胡</span>'
+               : (rec.from === p ? '<span class="sd-tag lose">' + (rec.rob ? "被抢杠" : "点炮") + "</span>" : "");
+      var sign2 = rec.pays[p] > 0 ? "+" : "";
+      h += '<div class="sd-row' + (won ? " won" : "") + '">' +
+           '<div class="sd-head">' + (rec.d === p ? '<span class="zhuang">庄</span>' : "") +
+           NAMES[p] + mark +
+           '<span class="sd-note">' + sign2 + rec.pays[p] + " 分</span></div>" +
+           '<div class="sd-tiles">';
+      for (var t = 0; t < hd.h.length; t++) h += mjHTML(hd.h[t], { size: "sm" });
+      for (var m = 0; m < hd.m.length; m++) {
+        h += '<span class="sd-gap"></span>' +
+             meldHTML({ key: hd.m[m].k, type: hd.m[m].t, concealed: !!hd.m[m].c }, "sm");
+      }
+      if (hd.f.length) {
+        h += '<span class="sd-gap"></span>';
+        for (var f = 0; f < hd.f.length; f++) h += mjHTML(hd.f[f], { size: "sm" });
+      }
+      h += "</div></div>";
+    }
+    return h + "</div>";
   }
 
   /* ── 新版本检测 ──
@@ -3667,9 +4008,43 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   document.querySelector("#sc-help [data-go]").onclick = function () { goBackFromPanel(); };
   document.querySelector("#sc-set [data-go]").onclick = function () { goBackFromPanel(); };
   document.querySelector("#sc-about [data-go]").onclick = function () { goBackFromPanel(); };
+  document.querySelector("#sc-mine [data-go]").onclick = function () { goBackFromPanel(); };
   document.getElementById("btn-about").onclick = function () {
     ui.screenReturn = "home";
     showScreen("about");
+  };
+  document.getElementById("btn-mine").onclick = function () {
+    ui.screenReturn = "home";
+    showScreen("mine");
+  };
+  document.getElementById("wealth-card").onclick = function () {
+    ui.screenReturn = "home";
+    showScreen("mine");
+  };
+  /* 点一行历史，展开当时的牌谱 */
+  document.getElementById("mine-body").onclick = function (e) {
+    if (e.target.id === "log-clear") {
+      if (confirm("清空全部牌局记录？\n身家和战绩统计不受影响，只是不能再复盘了。")) {
+        clearLog(); renderMine();
+      }
+      return;
+    }
+    var row = e.target.closest(".hrow");
+    if (!row) return;
+    var ix = parseInt(row.getAttribute("data-log"), 10);
+    var box = document.getElementById("hd-" + ix);
+    if (!box) return;
+    if (box.classList.contains("on")) {
+      box.classList.remove("on");
+      box.innerHTML = "";
+      row.classList.remove("open");
+      return;
+    }
+    var log = loadLog();
+    if (!log[ix]) return;
+    box.innerHTML = replayHTML(log[ix]);
+    box.classList.add("on");
+    row.classList.add("open");
   };
   document.getElementById("update-bar").onclick = function () {
     this.textContent = "正在更新…";
