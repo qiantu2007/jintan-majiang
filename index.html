@@ -152,6 +152,73 @@ html, body {
 .wc-num.neg { color: #ff9a92; }
 .wc-sub { font-size: calc(12.5px * var(--fs)); color: var(--dim); }
 
+/* ══════════ 个人资料 ══════════ */
+.ava {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: calc(30px * var(--fs)); height: calc(30px * var(--fs));
+  border-radius: 50%; flex: none;
+  font-family: "Kaiti SC", "KaiTi", serif; font-weight: 700;
+  font-size: calc(16px * var(--fs));
+  color: #123a26; background: linear-gradient(#c8e6cf, #8fc9a4);
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.15);
+}
+.ava.m { color: #0d2a4a; background: linear-gradient(#bcd9f5, #7aa8d8); }
+.ava.f { color: #4a0d1e; background: linear-gradient(#f7c8d2, #e08fa4); }
+.ava.big { width: calc(52px * var(--fs)); height: calc(52px * var(--fs)); font-size: calc(28px * var(--fs)); }
+
+/* 主页左上角小卡 */
+.home-prof {
+  position: absolute; z-index: 3;
+  top: max(calc(8px * var(--fs)), env(safe-area-inset-top));
+  left: max(calc(10px * var(--fs)), env(safe-area-inset-left));
+  display: flex; align-items: center; gap: calc(8px * var(--fs));
+  font: inherit; text-align: left; cursor: pointer;
+  background: rgba(4,32,18,.5);
+  border: 1px solid rgba(230,189,87,.3);
+  border-radius: 999px;
+  padding: calc(4px * var(--fs)) calc(13px * var(--fs)) calc(4px * var(--fs)) calc(4px * var(--fs));
+  max-width: calc(60vw);
+}
+.home-prof:hover { border-color: var(--brass); background: rgba(4,32,18,.72); }
+.home-prof:focus-visible { outline: 3px solid #ffe08a; outline-offset: 2px; }
+.hp-txt { display: flex; flex-direction: column; min-width: 0; }
+.hp-nick {
+  font-size: calc(14px * var(--fs)); font-weight: 700; color: #ffe9a8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hp-sub {
+  font-size: calc(10.5px * var(--fs)); color: var(--dim);
+  font-family: ui-monospace, Consolas, monospace; white-space: nowrap;
+}
+
+/* 「我的」里的资料卡 */
+.prof-card {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  border-radius: calc(10px * var(--fs));
+  padding: calc(11px * var(--fs)) calc(13px * var(--fs));
+  display: flex; flex-direction: column; gap: calc(7px * var(--fs));
+}
+.prof-top { display: flex; align-items: center; gap: calc(11px * var(--fs)); }
+.prof-id { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pid {
+  font-family: ui-monospace, Consolas, monospace; font-weight: 700;
+  font-size: calc(18px * var(--fs)); color: #ffe9a8; letter-spacing: .06em;
+}
+.pid-note { font-size: calc(11.5px * var(--fs)); color: #8fa894; }
+.net-input.age { flex: 0 0 7rem; }
+
+/* 房间页里的迷你资料条 */
+.prof-mini {
+  display: flex; align-items: center; gap: calc(9px * var(--fs));
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  border-radius: calc(9px * var(--fs));
+  padding: calc(8px * var(--fs)) calc(12px * var(--fs));
+  margin-bottom: calc(9px * var(--fs));
+}
+.pm-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pm-txt b { font-size: calc(15px * var(--fs)); color: #eef5ec; }
+.pm-sub { font-size: calc(11.5px * var(--fs)); color: #8fa894; }
+
 /* 右下角版本号，点了进帮助 */
 .ver-badge {
   position: absolute; right: calc(10px * var(--fs));
@@ -350,6 +417,68 @@ html, body {
 .st.off  { color: #fff; background: var(--hu); }
 .icon-btn.tiny { min-width: auto; min-height: calc(30px * var(--fs)); padding: 0 calc(10px * var(--fs)); font-size: calc(12px * var(--fs)); }
 
+/* 服务器状态卡 */
+.srv-card {
+  background: rgba(13,122,62,.16); border: 1px solid rgba(111,208,142,.45);
+  border-radius: calc(9px * var(--fs));
+  padding: calc(9px * var(--fs)) calc(12px * var(--fs));
+  display: flex; flex-direction: column; gap: calc(6px * var(--fs));
+}
+.srv-card.custom { background: rgba(230,189,87,.14); border-color: rgba(230,189,87,.5); }
+.srv-tag {
+  font-size: calc(11.5px * var(--fs)); font-weight: 700;
+  color: #08331d; background: #6fd08e;
+  border-radius: 999px; padding: calc(2px * var(--fs)) calc(10px * var(--fs));
+}
+.srv-card.custom .srv-tag { color: #4a2f06; background: linear-gradient(#f5d98a, #d3a72c); }
+.srv-url {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: calc(12.5px * var(--fs)); color: #eef5ec;
+  word-break: break-all; line-height: 1.5;
+  background: rgba(0,0,0,.28); border-radius: calc(6px * var(--fs));
+  padding: calc(6px * var(--fs)) calc(9px * var(--fs));
+}
+.srv-btns { display: flex; flex-wrap: wrap; gap: calc(7px * var(--fs)); }
+
+/* 可折叠的小标题 */
+h3.fold {
+  cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+  gap: calc(8px * var(--fs));
+}
+h3.fold .fold-i { transition: transform .18s; color: var(--brass); }
+h3.fold.open .fold-i { transform: rotate(180deg); }
+
+/* 部署教程 */
+.deploy { display: flex; flex-direction: column; gap: calc(9px * var(--fs)); }
+.dstep {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  border-radius: calc(8px * var(--fs));
+  padding: calc(9px * var(--fs)) calc(12px * var(--fs));
+}
+.dstep .dt {
+  font-weight: 700; font-size: calc(14.5px * var(--fs)); color: var(--brass);
+  margin-bottom: calc(3px * var(--fs));
+}
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(0,0,0,.3); border-radius: 3px;
+  padding: 0 calc(5px * var(--fs)); color: #ffe9a8;
+}
+.cmd {
+  display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--fs));
+  margin: calc(5px * var(--fs)) 0;
+}
+.cmd code {
+  flex: 1 1 14rem; min-width: 0;
+  font-family: ui-monospace, Consolas, monospace; font-size: calc(13px * var(--fs));
+  background: rgba(0,0,0,.35); color: #b7f0c9;
+  border-radius: calc(6px * var(--fs));
+  padding: calc(7px * var(--fs)) calc(10px * var(--fs));
+  word-break: break-all;
+}
+.cmd-note { font-size: calc(11.5px * var(--fs)); color: #8fa894; }
+.dnote { font-size: calc(12.5px * var(--fs)); color: #8fa894; }
+
 /* 更新记录 */
 .log-item {
   border-left: 2px solid rgba(230,189,87,.35);
@@ -388,7 +517,76 @@ html, body {
   transition: transform .08s, box-shadow .08s;
 }
 .big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a6510, 0 2px 6px rgba(0,0,0,.34); }
+/* 主入口做大一点，一眼就看到 */
+.big-btn.play {
+  font-size: calc(21px * var(--fs));
+  min-width: calc(180px * var(--fs)); min-height: calc(54px * var(--fs));
+  letter-spacing: .08em;
+}
 .big-btn.ghost { color: #123a26; background: linear-gradient(#e9f3ea, #bcd5c2); box-shadow: 0 4px 0 #6d8a78, 0 6px 14px rgba(0,0,0,.3); }
+
+/* 「想怎么打」选择面板 */
+.play-card {
+  background: linear-gradient(#15583a, #0a3a24);
+  border: calc(3px * var(--fs)) solid var(--wood);
+  border-radius: calc(14px * var(--fs));
+  padding: calc(11px * var(--fs)) calc(20px * var(--fs));
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  /* 卡片本身不滚动：矮屏上只让中间的选项列表滚，
+     标题和「先不打了」始终钉在看得见的地方 */
+  max-height: 100%; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+  gap: calc(10px * var(--fs)); width: min(94%, 30rem);
+}
+.play-card h2, .play-card > .icon-btn { flex: none; }
+.play-card h2 {
+  font-family: "Kaiti SC", "KaiTi", serif; color: #ffe9a8;
+  font-size: calc(22px * var(--fs)); letter-spacing: .1em;
+  display: var(--po-head);
+}
+.play-opts {
+  display: flex; flex-direction: column; gap: calc(8px * var(--fs)); width: 100%;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(4px * var(--fs));   /* 别把最后一个按钮的立体阴影切掉 */
+}
+.play-opt {
+  font: inherit; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: calc(2px * var(--fs));
+  flex: none;
+  border: none; border-radius: calc(11px * var(--fs));
+  padding: calc(10px * var(--fs)) calc(16px * var(--fs));
+  color: #3a2a12;
+  background: linear-gradient(#f2ead4, #cfc0a0);
+  box-shadow: 0 4px 0 #8a7a5c, 0 6px 14px rgba(0,0,0,.3);
+  transition: transform .08s, box-shadow .08s;
+}
+.play-opt:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a7a5c; }
+.play-opt:focus-visible { outline: 3px solid #ffe08a; outline-offset: 2px; }
+.play-opt.go {
+  color: #4a2f06;
+  background: linear-gradient(#f5d98a, var(--brass) 55%, #c99a24);
+  box-shadow: 0 4px 0 #8a6510, 0 6px 14px rgba(0,0,0,.34);
+}
+.play-opt.net {
+  color: #fff;
+  background: linear-gradient(#8fd4a8, #2e8b57);
+  box-shadow: 0 4px 0 #1c5c39, 0 6px 14px rgba(0,0,0,.34);
+}
+.po-t { font-size: calc(18px * var(--fs)); font-weight: 700; letter-spacing: .04em; line-height: 1.3; }
+.po-s { font-size: calc(12.5px * var(--fs)); opacity: .78; line-height: 1.35; display: var(--po-sub); }
+#play-continue .po-s { display: block; }   /* 「继续上次那盘」的进度再挤也要留着 */
+
+/* 画布矮 + 字号大的时候三个选项挤不下。竖屏整页转了 90°，
+   吃掉高度的是物理宽度，所以两种朝向要分别判 */
+:root { --po-sub: block; --po-head: block; }
+@media (orientation: landscape) and (max-height: 430px) {
+  body[data-font="large"], body[data-font="xlarge"] { --po-sub: none; }
+  body[data-font="xlarge"] { --po-head: none; }
+}
+@media (orientation: portrait) and (max-width: 430px) {
+  body[data-font="large"], body[data-font="xlarge"] { --po-sub: none; }
+  body[data-font="xlarge"] { --po-head: none; }
+}
 .big-btn.alt   { color: #3a2a12; background: linear-gradient(#f2ead4, #cfc0a0); box-shadow: 0 4px 0 #8a7a5c, 0 6px 14px rgba(0,0,0,.3); }
 .big-btn:focus-visible, .icon-btn:focus-visible, .mini-btn:focus-visible { outline: 3px solid #ffe08a; outline-offset: 2px; }
 
@@ -1047,6 +1245,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   <!-- ══════════ 首页 ══════════ -->
   <section class="screen home on" id="sc-home">
+    <button class="home-prof" id="home-prof" type="button"></button>
     <div class="lantern" aria-hidden="true"></div>
     <h1>金坛麻将</h1>
     <div class="sub">常州金坛玩法</div>
@@ -1056,15 +1255,22 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       <span class="ub-dot"></span>有新版本，点这里更新
     </button>
     <div class="home-btns">
-      <button class="big-btn hidden" id="btn-continue" type="button">继续游戏</button>
-      <button class="big-btn" id="btn-start" type="button">开始游戏</button>
+      <button class="big-btn play" id="btn-start" type="button">开始游戏</button>
       <button class="big-btn ghost" id="btn-help" type="button">怎么玩</button>
-      <button class="big-btn" id="btn-net" type="button" style="background:linear-gradient(#8fd4a8,#2e8b57);color:#fff;box-shadow:0 4px 0 #1c5c39,0 6px 14px rgba(0,0,0,.34)">和朋友一起打</button>
       <button class="big-btn ghost" id="btn-mine" type="button">我的</button>
       <button class="big-btn alt" id="btn-set" type="button">设置</button>
       <button class="big-btn alt" id="btn-about" type="button">帮助</button>
     </div>
     <div class="ver-badge" id="ver-badge"></div>
+
+    <!-- 点「开始游戏」后选怎么打 -->
+    <div class="overlay" id="play-ov">
+      <div class="play-card">
+        <h2>想怎么打？</h2>
+        <div class="play-opts" id="play-opts"></div>
+        <button type="button" class="icon-btn" id="play-cancel">先不打了</button>
+      </div>
+    </div>
   </section>
 
   <!-- ══════════ 联机房间 ══════════ -->
@@ -1245,8 +1451,26 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 (function () {
   "use strict";
 
-  var VERSION = "1.9.0";
+  var VERSION = "1.11.0";
   var CHANGELOG = [
+    { v: "1.11.0", d: "2026-09-01", items: [
+      "首页只留一个「开始游戏」，点进去再选怎么打",
+      "上次没打完的那盘，会显示在最上面，还标着打到第几盘、剩多少张",
+      "「自己一个人打」和「和朋友一起打」并排放，不用再找",
+      "小屏幕、大字号下三个选项也能一眼看全"
+    ] },
+    { v: "1.10.0", d: "2026-09-01", items: [
+      "有个人资料了：游戏 ID、昵称、年龄、性别",
+      "主页左上角显示头像和资料，点一下就能改",
+      "游戏 ID 自动生成、终身不变，可以复制给朋友",
+      "联机进房间时，别人看到的就是你的昵称"
+    ] },
+    { v: "1.9.1", d: "2026-09-01", items: [
+      "服务器地址已经内置好，装上就能联机，不用再一台台手填",
+      "「和朋友一起打」里能看到当前用的服务器，有「复制网址」按钮",
+      "同一页里加了自己搭服务器的教程，命令都能一键复制",
+      "想用自己的服务器就点「改成别的」，随时能改回默认"
+    ] },
     { v: "1.9.0", d: "2026-08-31", items: [
       "能和朋友一起打了：开房间拿房间号，或者直接发邀请链接",
       "最多四个人，空位自动用电脑补上",
@@ -2095,6 +2319,60 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     return s.wealthResult;
   }
 
+  /* ══════════ 个人资料 ══════════
+     游戏 ID 自动生成、终身不变，用来认人；昵称随时可改，联机时别人看到的就是它。 */
+  var PROF_KEY = "jintan_mj_profile_v1";
+  var ID_CHARS = "ACDEFGHJKLMNPQRTUVWXY3479";   /* 去掉容易看错的 0O1I B8 S5 Z2 */
+  var profile = null;
+
+  function newGameId() {
+    var s = "";
+    for (var i = 0; i < 6; i++) s += ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)];
+    return "JT-" + s;
+  }
+  function defaultProfile() {
+    var old = "";
+    try { old = localStorage.getItem("jintan_mj_name") || ""; } catch (e) {}
+    return { id: newGameId(), nick: old || "", age: 0, sex: "" };
+  }
+  function loadProfile() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(PROF_KEY) || "null"); } catch (e) {}
+    profile = (d && typeof d === "object") ? d : defaultProfile();
+    if (!profile.id) profile.id = newGameId();
+    if (profile.nick == null) profile.nick = "";
+    if (profile.age == null) profile.age = 0;
+    if (profile.sex == null) profile.sex = "";
+    return profile;
+  }
+  function saveProfile() {
+    try { localStorage.setItem(PROF_KEY, JSON.stringify(profile)); } catch (e) {}
+    renderHomeProfile();
+  }
+  function profNick() { return (profile && profile.nick) || "玩家"; }
+  function sexLabel(s) { return s === "m" ? "男" : s === "f" ? "女" : "不说"; }
+
+  /* 头像：昵称首字 + 按性别上色。不联网、不用图片 */
+  function avatarHTML(cls) {
+    var n = profNick();
+    var ch = n.charAt(0) || "玩";
+    var k = profile && profile.sex === "m" ? " m" : profile && profile.sex === "f" ? " f" : "";
+    return '<span class="ava' + k + (cls ? " " + cls : "") + '">' + esc(ch) + "</span>";
+  }
+
+  /* 主页左上角那张小卡 */
+  function renderHomeProfile() {
+    var el = document.getElementById("home-prof");
+    if (!el || !profile) return;
+    var bits = [];
+    if (profile.age > 0) bits.push(profile.age + " 岁");
+    if (profile.sex) bits.push(sexLabel(profile.sex));
+    el.innerHTML = avatarHTML() +
+      '<span class="hp-txt"><span class="hp-nick">' + esc(profNick()) + "</span>" +
+      '<span class="hp-sub">' + esc(profile.id) +
+      (bits.length ? "　" + bits.join(" · ") : "") + "</span></span>";
+  }
+
   /* ══════════ 牌谱 ══════════
      每盘结束存一条，供「我的」里翻历史和复盘。只留最近 60 盘，
      一条约 600 字节，占不了多少地方。 */
@@ -2343,9 +2621,39 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   }
 
   function refreshHome() {
-    document.getElementById("btn-continue").classList.toggle("hidden", !hasSave());
     document.getElementById("ver-badge").textContent = "v" + VERSION;
+    renderHomeProfile();
     renderWealthCard();
+  }
+
+  /* 上次那盘打到哪了，写在「继续」按钮上 */
+  function saveSummary() {
+    var d = loadGame();
+    if (!d || !d.game) return null;
+    var g = d.game;
+    var bits = [];
+    if (g.round) bits.push("第 " + g.round + " 盘");
+    if (g.wall && g.wall.length != null) bits.push("还剩 " + g.wall.length + " 张");
+    return bits.join("，");
+  }
+
+  function playOpt(id, title, sub, cls) {
+    return '<button type="button" class="play-opt' + (cls ? " " + cls : "") + '" id="' + id + '">' +
+           '<span class="po-t">' + title + "</span>" +
+           '<span class="po-s">' + sub + "</span></button>";
+  }
+
+  function openPlayMenu() {
+    var h = "";
+    var sum = hasSave() ? saveSummary() : null;
+    if (sum) h += playOpt("play-continue", "继续上次那盘", sum, "go");
+    h += playOpt("play-solo", "自己一个人打", "三个电脑陪你，随时能停", sum ? "" : "go");
+    h += playOpt("play-net", "和朋友一起打", "开房间发给朋友，人不够电脑补上", "net");
+    document.getElementById("play-opts").innerHTML = h;
+    document.getElementById("play-ov").classList.add("on");
+  }
+  function closePlayMenu() {
+    document.getElementById("play-ov").classList.remove("on");
   }
 
   /* 帮助页：怎么装到桌面 + 更新记录 */
@@ -2383,6 +2691,26 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   function renderMine() {
     var w = wealth, ix = rankIndexOf(w.w), r = RANKS[ix], nx = RANKS[ix + 1];
     var h = "";
+
+    /* 个人资料 */
+    h += '<h3>个人资料</h3><div class="prof-card">' +
+      '<div class="prof-top">' + avatarHTML("big") +
+      '<div class="prof-id"><span class="pid">' + esc(profile.id) + "</span>" +
+      '<span class="pid-note">游戏 ID，别人可以用它找到你，不会变</span></div>' +
+      '<button type="button" class="icon-btn tiny" id="prof-copy">复制</button></div>' +
+      '<div class="set-row"><label>昵称</label>' +
+      '<input class="net-input" id="prof-nick" maxlength="8" placeholder="联机时别人看到的名字" value="' +
+      esc(profile.nick) + '"></div>' +
+      '<div class="set-row"><label>年龄</label>' +
+      '<input class="net-input age" id="prof-age" type="number" min="0" max="120" placeholder="不填也行" value="' +
+      (profile.age > 0 ? profile.age : "") + '"></div>' +
+      '<div class="set-row"><label>性别</label><div class="seg">' +
+      ['m', 'f', ''].map(function (v) {
+        return '<button type="button" data-sex="' + v + '" class="' +
+               (profile.sex === v ? "on" : "") + '">' + sexLabel(v) + "</button>";
+      }).join("") + "</div></div>" +
+      '<div class="net-actions"><button type="button" class="big-btn" id="prof-save">保存</button></div>' +
+      "</div>";
 
     /* 顶部：身家 + 称号 + 到下一级的进度 */
     h += '<div class="mine-top' + (w.w < 0 ? " neg" : "") + '">' +
@@ -2536,16 +2864,36 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     }
     return t;
   }
-  function netName() {
-    var n = "";
-    try { n = localStorage.getItem("jintan_mj_name") || ""; } catch (e) {}
-    return n || "玩家";
-  }
-  function setNetName(n) {
-    try { localStorage.setItem("jintan_mj_name", (n || "").slice(0, 8)); } catch (e) {}
-  }
+  /* 联机时别人看到的就是你的昵称 */
+  function netName() { return profNick().slice(0, 8); }
+  /* 内置的默认服务器：装好就能联机，不用每个人自己填。
+     想用自己的服务器就在下面「改」一下，会覆盖这个默认值。 */
+  var DEFAULT_SERVER = "https://jintan-mahjong.qiantu2007.workers.dev";
   function netBase() {
-    return (settings.server || "").replace(/\/+$/, "");
+    return ((settings.server || DEFAULT_SERVER) || "").replace(/\/+$/, "");
+  }
+  function usingDefault() { return !settings.server; }
+
+  /* 复制文本，带降级：剪贴板拿不到就把文字选中让用户自己复制 */
+  function copyText(text, okMsg) {
+    var ok = false;
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      try { navigator.clipboard.writeText(text); ok = true; } catch (e2) {}
+    }
+    toast(ok ? (okMsg || "复制好了") : "复制不了，请长按文字手动复制");
+    return ok;
   }
   function shareLink(code) {
     return location.origin + location.pathname + "?room=" + code;
@@ -2985,21 +3333,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var base = netBase();
     var h = "";
 
-    if (!base) {
-      h += '<div class="chi-banner" style="background:linear-gradient(#c9902a,#8a6510)">还没设置联机服务器</div>' +
-           "<p>联机需要一台中转服务器。按 <strong>_服务端/部署步骤.md</strong> 部署好之后，" +
-           "把拿到的网址填到下面（也可以在设置里改）。</p>" +
-           '<div class="set-row"><label>服务器地址</label>' +
-           '<input class="net-input" id="net-server" placeholder="https://xxx.workers.dev" value="">' +
-           '<button type="button" class="icon-btn" id="net-save">保存</button></div>';
-      el.innerHTML = h;
-      return;
-    }
-
     if (!NET.code || !NET.ws) {
-      h += '<div class="set-row"><label>你的名字</label>' +
-           '<input class="net-input" id="net-name" maxlength="8" value="' + esc(netName()) + '">' +
-           '<button type="button" class="icon-btn" id="net-savename">保存</button></div>';
+      h += '<div class="prof-mini">' + avatarHTML() +
+           '<span class="pm-txt"><b>' + esc(profNick()) + "</b>" +
+           '<span class="pm-sub">进房间后别人看到的就是这个名字</span></span>' +
+           '<button type="button" class="icon-btn tiny" id="net-editprof">改</button></div>';
       h += '<div class="net-actions">' +
            '<button type="button" class="big-btn" id="net-create">开一个房间</button>' +
            "</div>";
@@ -3008,12 +3346,63 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
            '<button type="button" class="icon-btn" id="net-join">进去</button></div>';
       if (NET.status) h += '<p class="set-hint">' + esc(NET.status) + "</p>";
       if (NET.err) h += '<p class="set-hint warn">' + esc(NET.err) + "</p>";
+
       h += '<h3>怎么玩</h3><ul>' +
            "<li>一个人开房，把房间号或链接发给朋友。</li>" +
            "<li>最多四个人，不够的位子自动用电脑补上。</li>" +
            "<li>大家都点了「准备好了」，房主才能开始。</li>" +
            "<li>牌是服务器发的，每个人只收到自己的牌，房主也看不到别人的。</li>" +
            "</ul>";
+
+      /* 服务器状态：默认已经内置好，一般不用管 */
+      h += '<h3>联机服务器</h3>';
+      h += '<div class="srv-card' + (usingDefault() ? "" : " custom") + '">' +
+           '<div class="srv-row"><span class="srv-tag">' +
+           (usingDefault() ? "已内置，可以直接用" : "用的是你自己的") + "</span></div>" +
+           '<div class="srv-url" id="srv-url">' + esc(base) + "</div>" +
+           '<div class="srv-btns">' +
+           '<button type="button" class="icon-btn" id="srv-copy">复制网址</button>' +
+           '<button type="button" class="icon-btn" id="srv-edit">改成别的</button>' +
+           (usingDefault() ? "" :
+             '<button type="button" class="icon-btn danger" id="srv-reset">用回默认</button>') +
+           "</div></div>";
+      if (NET.editSrv) {
+        h += '<div class="set-row"><label>服务器地址</label>' +
+             '<input class="net-input" id="net-server" placeholder="https://xxx.workers.dev" value="' +
+             esc(settings.server || "") + '">' +
+             '<button type="button" class="icon-btn" id="net-save">保存</button></div>';
+      }
+
+      /* 自己搭一台（可选），默认收起来 */
+      h += '<h3 class="fold' + (NET.showDeploy ? " open" : "") + '" id="deploy-fold">' +
+           "自己搭一台服务器（可选）<span class=\"fold-i\">▾</span></h3>";
+      if (NET.showDeploy) {
+        h += '<div class="deploy">' +
+          "<p>上面那台是现成的，<strong>一般不用自己搭</strong>。" +
+          "如果你想要一台完全属于自己的（或者上面那台连不上），按下面四步做，" +
+          "<strong>全程免费</strong>，不用买服务器、不用买域名、不用备案。</p>" +
+
+          '<div class="dstep"><div class="dt">1. 装 Node.js</div>' +
+          '<p>电脑上没有的话，去 <span class="mono">nodejs.org</span> 下载 LTS 版装上。</p></div>' +
+
+          '<div class="dstep"><div class="dt">2. 注册 Cloudflare</div>' +
+          '<p><span class="mono">dash.cloudflare.com/sign-up</span>　免费，不用填信用卡。</p></div>' +
+
+          '<div class="dstep"><div class="dt">3. 在电脑上跑两条命令</div>' +
+          '<p>打开 PowerShell，先 <span class="mono">cd</span> 到项目里的 ' +
+          '<span class="mono">_服务端</span> 文件夹，然后依次执行：</p>' +
+          cmdRow("npx wrangler login", "会弹浏览器让你授权") +
+          cmdRow("npx wrangler deploy", "部署，几秒钟") +
+          '<p>成功后会打印一行 <span class="mono">https://xxx.workers.dev</span>，那就是你的服务器网址。</p></div>' +
+
+          '<div class="dstep"><div class="dt">4. 填回来</div>' +
+          '<p>回到这一页，点上面的<strong>「改成别的」</strong>，把网址粘进去保存。' +
+          "每台要联机的手机都填一次。</p></div>" +
+
+          "<p class=\"dnote\">日常不用维护。免费额度是每天 10 万次请求，" +
+          "几个人打麻将用不掉零头。</p>" +
+          "</div>";
+      }
       el.innerHTML = h;
       return;
     }
@@ -3076,15 +3465,34 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  /* 一条可以一键复制的命令 */
+  function cmdRow(cmd, note) {
+    return '<div class="cmd"><code>' + esc(cmd) + "</code>" +
+           '<button type="button" class="icon-btn tiny" data-cmd="' + esc(cmd) + '">复制</button>' +
+           (note ? '<span class="cmd-note">' + esc(note) + "</span>" : "") + "</div>";
+  }
+
   document.getElementById("net-body").addEventListener("click", function (e) {
     var t = e.target;
     if (t.id === "net-save") {
       var v = (document.getElementById("net-server").value || "").trim();
-      settings.server = v; saveSettings(); NET.err = ""; renderLobby(); return;
+      settings.server = v; saveSettings();
+      NET.err = ""; NET.editSrv = false;
+      toast(v ? "服务器地址保存好了" : "已改回默认服务器");
+      renderLobby(); return;
     }
-    if (t.id === "net-savename") {
-      setNetName(document.getElementById("net-name").value); renderLobby(); return;
+    if (t.id === "srv-copy") { copyText(netBase(), "网址复制好了，发给朋友"); return; }
+    if (t.id === "srv-edit") { NET.editSrv = !NET.editSrv; renderLobby(); return; }
+    if (t.id === "srv-reset") {
+      settings.server = ""; saveSettings(); NET.editSrv = false;
+      toast("已改回默认服务器"); renderLobby(); return;
     }
+    if (t.id === "deploy-fold" || (t.closest && t.closest("#deploy-fold"))) {
+      NET.showDeploy = !NET.showDeploy; renderLobby(); return;
+    }
+    var cmd = t.getAttribute && t.getAttribute("data-cmd");
+    if (cmd) { copyText(cmd, "命令复制好了，去 PowerShell 里粘贴"); return; }
+    if (t.id === "net-editprof") { ui.screenReturn = "net"; showScreen("mine"); return; }
     if (t.id === "net-create") { netCreate(); return; }
     if (t.id === "net-join") {
       netConnect(document.getElementById("net-code").value, false); return;
@@ -3182,7 +3590,10 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       '<input class="net-input" id="set-server" placeholder="https://xxx.workers.dev" value="' +
       esc(settings.server || "") + '">' +
       '<button type="button" class="icon-btn" id="set-server-save">保存</button></div>' +
-      '<p class="set-hint">和朋友联机才需要，单机不用填。部署方法见 _服务端/部署步骤.md</p>' +
+      '<p class="set-hint">' + (settings.server
+        ? "用的是你自己的服务器。清空这一格会改回内置的那台。"
+        : "留空就是用内置的那台（" + DEFAULT_SERVER.replace(/^https?:\/\//, "") +
+          "），一般不用改。想自己搭一台的话，「和朋友一起打」页面里有教程。") + "</p>" +
       rowSeg("牌面大小", "tsize", [["std", "标准"], ["big", "大（两行）"]]) +
       rowSeg("字体大小", "font", [["normal", "正常"], ["large", "大"], ["xlarge", "特大"]]) +
       rowSeg("打牌时屏幕常亮", "awake", [["1", "开"], ["0", "关"]]) +
@@ -4750,12 +5161,29 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   /* —— 事件 —— */
   document.getElementById("btn-start").onclick = function () {
     unlockVoice();
-    if (hasSave()) {
-      if (!confirm("开始新的一盘？未完成的牌局会被替换。")) return;
-    }
-    startRound(false);
+    openPlayMenu();
   };
-  document.getElementById("btn-continue").onclick = function () { unlockVoice(); continueSaved(); };
+  document.getElementById("play-cancel").onclick = closePlayMenu;
+  document.getElementById("play-ov").onclick = function (e) {
+    if (e.target === this) closePlayMenu();      /* 点空白处关掉 */
+  };
+  document.getElementById("play-opts").onclick = function (e) {
+    var b = e.target.closest(".play-opt");
+    if (!b) return;
+    if (b.id === "play-continue") { closePlayMenu(); continueSaved(); return; }
+    if (b.id === "play-solo") {
+      if (hasSave() && !confirm("开始新的一盘？上次没打完的会被替换。")) return;
+      closePlayMenu();
+      startRound(false);
+      return;
+    }
+    if (b.id === "play-net") {
+      closePlayMenu();
+      ui.screenReturn = "home";
+      showScreen("net");
+      return;
+    }
+  };
   document.getElementById("btn-help").onclick = function () { ui.screenReturn = "home"; showScreen("help"); };
   document.getElementById("btn-set").onclick = function () { ui.screenReturn = "home"; showScreen("set"); };
   function goBackFromPanel() {
@@ -4772,11 +5200,6 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     if (NET.started && game && game.online) showScreen("table");
     else showScreen("home");
   };
-  document.getElementById("btn-net").onclick = function () {
-    unlockVoice();
-    ui.screenReturn = "home";
-    showScreen("net");
-  };
   document.getElementById("btn-about").onclick = function () {
     ui.screenReturn = "home";
     showScreen("about");
@@ -4789,8 +5212,31 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     ui.screenReturn = "home";
     showScreen("mine");
   };
+  document.getElementById("home-prof").onclick = function () {
+    ui.screenReturn = "home";
+    showScreen("mine");
+  };
   /* 点一行历史，展开当时的牌谱 */
   document.getElementById("mine-body").onclick = function (e) {
+    if (e.target.id === "prof-copy") { copyText(profile.id, "游戏 ID 复制好了"); return; }
+    var sx = e.target.getAttribute && e.target.getAttribute("data-sex");
+    if (sx != null) {
+      profile.sex = sx; saveProfile(); renderMine(); return;
+    }
+    if (e.target.id === "prof-save") {
+      var nk = (document.getElementById("prof-nick").value || "").trim().slice(0, 8);
+      var ag = parseInt(document.getElementById("prof-age").value, 10);
+      profile.nick = nk;
+      profile.age = (ag > 0 && ag < 130) ? ag : 0;
+      saveProfile();
+      toast("资料保存好了");
+      renderMine();
+      /* 已经在房间里就把新昵称同步过去 */
+      if (NET.ws && NET.ws.readyState === 1 && NET.code && !NET.started) {
+        netSend({ t: "rename", name: netName() });
+      }
+      return;
+    }
     if (e.target.id === "log-clear") {
       if (confirm("清空全部牌局记录？\n身家和战绩统计不受影响，只是不能再复盘了。")) {
         clearLog(); renderMine();
@@ -4899,6 +5345,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   loadSettings();
   loadWealth();
+  loadProfile();
   setupPWA();
   refreshHome();
   checkVersion();
