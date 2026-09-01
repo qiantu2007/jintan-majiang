@@ -3,7 +3,7 @@
    策略：缓存优先 + 后台悄悄更新（stale-while-revalidate）——
    老人永远不会看到白屏或转圈，新版本在下次打开时自动生效。 */
 
-var CACHE = "jintan-mj-v11";
+var CACHE = "jintan-mj-v15";
 var ASSETS = [
   "./",
   "./index.html",
@@ -41,6 +41,10 @@ self.addEventListener("fetch", function (e) {
   if (req.url.indexOf("http") !== 0) return;
   /* 版本文件永远走网络，不进缓存，否则永远查不到新版 */
   if (req.url.indexOf("version.json") > -1) return;
+  /* 联机服务器的请求一律不碰：
+     /new 被缓存的话每次开房都会拿到同一个房间号，
+     /health 被缓存的话服务器早就挂了体检还显示打勾。 */
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   e.respondWith(
     caches.match(req).then(function (hit) {
