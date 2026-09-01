@@ -643,6 +643,28 @@ h3.fold.open .fold-i { transform: rotate(180deg); }
 .easy-card .ez-s { font-size: calc(13px * var(--fs)); color: #cfe0d2; line-height: 1.5; }
 .easy-card .big-btn { margin-top: calc(4px * var(--fs)); min-height: calc(44px * var(--fs)); }
 
+/* 金坛话录音 */
+.vc-top {
+  display: flex; flex-direction: column; gap: calc(6px * var(--fs));
+  margin-bottom: calc(8px * var(--fs));
+}
+.vc-prog { font-size: calc(14px * var(--fs)); color: #e8f0e6; }
+.vc-prog b { color: var(--brass); font-size: calc(17px * var(--fs)); }
+.vc-list {
+  display: flex; flex-wrap: wrap; gap: calc(6px * var(--fs));
+}
+.vc-row {
+  display: flex; align-items: center; gap: calc(6px * var(--fs));
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  border-radius: calc(8px * var(--fs));
+  padding: calc(5px * var(--fs)) calc(8px * var(--fs));
+  flex: 1 1 calc(150px * var(--fs));
+}
+.vc-row.got { border-color: rgba(111,208,142,.5); background: rgba(13,122,62,.16); }
+.vc-row.rec { border-color: #ff8f8f; background: rgba(150,26,20,.28); }
+.vc-t { flex: 1; min-width: 0; font-size: calc(15px * var(--fs)); color: #eef5ec; }
+.vc-mark { color: #6fdc9a; font-weight: 700; width: 1em; }
+
 /* 存档备份 */
 .bk-box {
   width: 100%; font: inherit; font-size: calc(12px * var(--fs));
@@ -1080,6 +1102,14 @@ body {
 body[data-tsize="big"] { --tscale: 1.26; }
 body[data-tsize="big"] .rv-opp, body[data-tsize="big"] .rv-me { max-height: calc(var(--tw) * .5); }
 body[data-tsize="big"] .center-info { padding: calc(2px * var(--fs)) calc(7px * var(--fs)); }
+/* 大牌面时牌桌只剩一百七八十像素高，中间这块信息框再长一行就会
+   顶穿牌桌、被手牌区切掉。所以提示行放宽、压紧，尽量维持在一行。 */
+body[data-tsize="big"] .msg {
+  max-width: calc(240px * var(--fs));
+  font-size: calc(11.5px * var(--fs));
+  line-height: 1.25;
+  margin-top: 0;
+}
 body[data-tsize="big"] .center-info .lab { font-size: calc(9.5px * var(--fs)); }
 body[data-tsize="big"] .mj.md { --w: calc(var(--tw) * .46); }
 body[data-tsize="big"] .mj.sm { --w: calc(var(--tw) * .3); }
@@ -1397,7 +1427,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       <ul>
         <li>四个人，逆时针出牌。你的下家在右边。</li>
         <li>庄家先打。每人摸一张、打一张。</li>
-        <li>摸到花牌会自动亮出，再从牌尾补一张。</li>
+        <li>摸到花牌，点一下那张花（或点「补花」）把它亮到花区，再从牌尾补一张。连着摸到花就连着补。</li>
         <li>牌墙摸完还没人胡，就是流局。</li>
         <li>庄家胡了或流局，庄家继续坐庄；否则下家坐庄。</li>
       </ul>
@@ -1533,8 +1563,30 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 (function () {
   "use strict";
 
-  var VERSION = "1.16.0";
+  var VERSION = "1.18.1";
   var CHANGELOG = [
+    { v: "1.18.1", d: "2026-09-01", items: [
+      "修好一个会卡死的问题：欠着花掉线、系统替你补掉之后再回来，出牌按钮就再也不出现了",
+      "补花提示语改短，大牌面＋特大字时不会再被手牌区切掉半截"
+    ] },
+    { v: "1.18.0", d: "2026-09-01", items: [
+      "摸到花不再自动换掉了：花牌会留在手里，点一下它（或点「补花」）才亮到花区，然后从牌尾补一张",
+      "连着摸到花就连着补，一张一张来，跟真牌桌上的动作一样",
+      "补花期间不给出牌按钮，免得手快把花当废牌打出去",
+      "电脑和掉线托管的座位仍旧自动补，不会把牌局拖住",
+      "联机同步改了：服务端摸到花会停下来等你点，断线重连回来还欠着的那张花会接着让你补"
+    ] },
+    { v: "1.17.1", d: "2026-09-01", items: [
+      "录音界面加了发音参考：B 站有一期《江苏金坛话入门100句》可以对照着听",
+      "标明金坛话分两片 —— 东边吴语、西边江淮官话，按自家那片口音录就行"
+    ] },
+    { v: "1.17.0", d: "2026-09-01", items: [
+      "语音播报分三档：关 / 只报碰杠胡 / 每张打出的牌都报",
+      "可以录金坛话了：设置里有 40 条词，找会说的人照着念一遍，录完全家都能用",
+      "录音会自动剪掉前后空白、拉齐音量，一条约 7 KB，40 条加起来才 300 KB",
+      "统一转成 WAV，苹果安卓都放得响；录了哪条用哪条，没录的自动用普通话顶上",
+      "「一键调舒服」现在会把播报调成「每张牌都报」"
+    ] },
     { v: "1.16.0", d: "2026-09-01", items: [
       "房主复制完链接、切去微信发给朋友，回来房间还在了（以前会说「房间不存在」）",
       "掉线的人回来还是原来的座位，房主身份、准备状态都不会丢",
@@ -1743,7 +1795,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   var settings = {
     base: 10, flowerScore: 5, cap: 100,
     difficulty: "easy", speed: "mid", font: "normal",
-    voice: true, timer: 0, sound: true, counter: true,
+    voice: "act", timer: 0, sound: true, counter: true,
     luck: "fair", vibrate: true, awake: true, tsize: "std",
     server: ""
   };
@@ -1751,9 +1803,10 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   var ui = {
     screen: "home", prevScreen: "home", selected: null,
     paused: false, claimWait: null, discardWait: null, gangPickWait: null,
+    flowerWait: null, flowerId: null,
     mineOpen: { ladder: false, prof: false },   /* 「我的」里两块折叠区 */
     mineFocus: null,                            /* 进来后要自动展开并滚过去的那块 */
-    setOpen: { adv: false, bk: false, srv: false }   /* 设置里三块不常用的折叠区 */
+    setOpen: { adv: false, voice: false, bk: false, srv: false }   /* 设置里几块折叠区 */
   };
   var gen = 0;
   var uid = 1;
@@ -2316,8 +2369,262 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   function aiDelay() { return sleep(SPEED[settings.speed] || 1500); }
 
+  /* ══════════ 语音播报 ══════════
+     系统自带的中文语音只有普通话、粤语、台湾腔 —— 没有金坛话，
+     吴语毗陵小片任何一家 TTS 都不支持。想听地道乡音只有一条路：真人录一遍。
+     所以这里分两层：
+       · 有录音包就放录音（真金坛话）
+       · 没有就退回系统合成（普通话，至少能听清是什么牌）
+     录音在「设置 → 金坛话语音」里当场录，录完导出一个文件传上去，
+     全家的手机就都听得到了。 */
+  var VOICE_KEY = "jintan_mj_voice_v1";
+  var VOICE_PACK_FILE = "语音包.json";
+
+  /* 要录的词条。id 是内部键，text 是提示录音人念什么 */
+  var VOICE_LIST = (function () {
+    var a = [], i;
+    for (i = 1; i <= 9; i++) a.push({ id: "m" + i, text: NUM_CN.charAt(i - 1) + "万" });
+    for (i = 1; i <= 9; i++) a.push({ id: "s" + i, text: NUM_CN.charAt(i - 1) + "条" });
+    for (i = 1; i <= 9; i++) a.push({ id: "p" + i, text: NUM_CN.charAt(i - 1) + "筒" });
+    for (i = 1; i <= 7; i++) a.push({ id: "z" + i, text: HONOR["z" + i] });
+    a.push({ id: "act_peng", text: "碰" });
+    a.push({ id: "act_gang", text: "杠" });
+    a.push({ id: "act_hu", text: "胡了" });
+    a.push({ id: "act_zimo", text: "自摸" });
+    a.push({ id: "act_your", text: "该你了" });
+    a.push({ id: "act_liuju", text: "流局" });
+    return a;
+  })();
+
+  var voicePack = null;       /* id -> data url，null 表示还没加载或没有 */
+  var voiceAudio = null;      /* 复用一个 <audio>，别每次新建 */
+
+  function voiceText(id) {
+    for (var i = 0; i < VOICE_LIST.length; i++) if (VOICE_LIST[i].id === id) return VOICE_LIST[i].text;
+    return "";
+  }
+
+  /* 加载录音包：先看本机录的（localStorage），再看跟游戏一起传上来的文件 */
+  function loadVoicePack() {
+    try {
+      var local = localStorage.getItem(VOICE_KEY);
+      if (local) {
+        var d = JSON.parse(local);
+        if (d && typeof d === "object" && Object.keys(d).length) { voicePack = d; return; }
+      }
+    } catch (e) {}
+    /* 站点上带的包。没有就静静地退回合成音，不弹任何错 */
+    try {
+      fetch(VOICE_PACK_FILE, { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (d && typeof d === "object" && Object.keys(d).length) voicePack = d;
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
+
+  function hasClip(id) { return !!(voicePack && voicePack[id]); }
+  function voicePackCount() { return voicePack ? Object.keys(voicePack).length : 0; }
+
+  /* 说一句。优先放录音，没有录音才用系统合成。 */
+  function voiceOn() { return settings.voice === "act" || settings.voice === "all"; }
+
+  function say(id, fallbackText) {
+    if (!voiceOn()) return;
+    if (hasClip(id)) {
+      try {
+        if (!voiceAudio) voiceAudio = new Audio();
+        voiceAudio.pause();
+        voiceAudio.src = voicePack[id];
+        voiceAudio.currentTime = 0;
+        var pr = voiceAudio.play();
+        if (pr && pr.catch) pr.catch(function () {});
+        return;
+      } catch (e) {}
+    }
+    speak(fallbackText != null ? fallbackText : voiceText(id));
+  }
+
+  /* 报一张牌。「每张都报」那档才会走到这儿 */
+  function sayTile(key) {
+    if (settings.voice !== "all") return;
+    if (isFlower(key)) return;              /* 花牌是自动补的，不用报 */
+    say(key, tileName(key));
+  }
+
+  /* ── 录音 ──
+     录出来的原始格式各家不一样：Chrome 给 webm/opus，Safari 给 mp4/aac，
+     互相放不出来。录完一律转成 12kHz 单声道 WAV —— 体积能接受，
+     而且没有哪台手机放不响。牌名就一两个字，12k 采样完全够清楚。 */
+  var REC = { on: false, id: null, mr: null, chunks: [], stream: null, timer: null };
+  var REC_MS = 1800;          /* 每条录这么久，够说「三万」了 */
+  var WAV_HZ = 12000;
+
+  function wavFromBuffer(buf) {
+    /* 混成单声道并重采样 */
+    var src = buf.getChannelData(0);
+    if (buf.numberOfChannels > 1) {
+      var b = buf.getChannelData(1);
+      var mixed = new Float32Array(src.length);
+      for (var i = 0; i < src.length; i++) mixed[i] = (src[i] + b[i]) / 2;
+      src = mixed;
+    }
+
+    /* 掐掉前后的空白，再把音量拉齐。
+       录的时候是固定 1.8 秒，真正说话往往只占中间半秒多 ——
+       不剪的话每条 54KB，四十条就两兆多，而且每次播报前还要干等一下。 */
+    var peak = 0, i2;
+    for (i2 = 0; i2 < src.length; i2++) { var a2 = Math.abs(src[i2]); if (a2 > peak) peak = a2; }
+    if (peak > 0.01) {
+      var thr = peak * 0.05;    /* 阈值别太高，中文字尾是渐弱的，容易被削掉 */
+      var s0 = 0, s1 = src.length - 1;
+      while (s0 < src.length && Math.abs(src[s0]) < thr) s0++;
+      while (s1 > s0 && Math.abs(src[s1]) < thr) s1--;
+      var pad = Math.round(buf.sampleRate * 0.08);   /* 前后各留一点点，别切掉字头字尾 */
+      s0 = Math.max(0, s0 - pad);
+      s1 = Math.min(src.length - 1, s1 + pad);
+      if (s1 > s0 + buf.sampleRate * 0.1) {
+        var cut = new Float32Array(s1 - s0 + 1);
+        var gain = Math.min(4, 0.85 / peak);         /* 音量拉到接近满，但别爆 */
+        for (var c = 0; c < cut.length; c++) cut[c] = src[s0 + c] * gain;
+        src = cut;
+      }
+    }
+
+    var ratio = buf.sampleRate / WAV_HZ;
+    var n = Math.floor(src.length / ratio);
+    var out = new Int16Array(n);
+    for (var j = 0; j < n; j++) {
+      var v = src[Math.floor(j * ratio)];
+      v = v < -1 ? -1 : v > 1 ? 1 : v;
+      out[j] = v < 0 ? v * 0x8000 : v * 0x7fff;
+    }
+    var bytes = new ArrayBuffer(44 + out.length * 2);
+    var dv = new DataView(bytes);
+    var put = function (off, s) { for (var k = 0; k < s.length; k++) dv.setUint8(off + k, s.charCodeAt(k)); };
+    put(0, "RIFF"); dv.setUint32(4, 36 + out.length * 2, true); put(8, "WAVE");
+    put(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
+    dv.setUint16(22, 1, true); dv.setUint32(24, WAV_HZ, true);
+    dv.setUint32(28, WAV_HZ * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+    put(36, "data"); dv.setUint32(40, out.length * 2, true);
+    for (var q = 0; q < out.length; q++) dv.setInt16(44 + q * 2, out[q], true);
+    /* 转成 data url 存进去 */
+    var u8 = new Uint8Array(bytes), s = "";
+    for (var z = 0; z < u8.length; z++) s += String.fromCharCode(u8[z]);
+    return "data:audio/wav;base64," + btoa(s);
+  }
+
+  function saveVoicePack() {
+    try { localStorage.setItem(VOICE_KEY, JSON.stringify(voicePack || {})); }
+    catch (e) { toast("存不下了，手机存储可能满了"); }
+  }
+
+  async function recStart(id) {
+    if (REC.on) return;
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      toast("这个浏览器不支持录音，换 Chrome 或 Safari 试试");
+      return;
+    }
+    try {
+      REC.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      toast("没拿到麦克风权限，先在浏览器里允许一下");
+      return;
+    }
+    REC.on = true; REC.id = id; REC.chunks = [];
+    renderSettings();
+    try {
+      REC.mr = new MediaRecorder(REC.stream);
+    } catch (e) { recCleanup(); toast("录不了音"); return; }
+    REC.mr.ondataavailable = function (ev) { if (ev.data && ev.data.size) REC.chunks.push(ev.data); };
+    REC.mr.onstop = function () { recFinish(); };
+    REC.mr.start();
+    REC.timer = setTimeout(function () { recStop(); }, REC_MS);
+  }
+
+  function recStop() {
+    if (!REC.on || !REC.mr) return;
+    if (REC.timer) { clearTimeout(REC.timer); REC.timer = null; }
+    try { REC.mr.stop(); } catch (e) { recCleanup(); }
+  }
+
+  function recCleanup() {
+    if (REC.timer) { clearTimeout(REC.timer); REC.timer = null; }
+    if (REC.stream) { try { REC.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} }
+    REC.on = false; REC.mr = null; REC.chunks = []; REC.stream = null;
+    var keep = REC.id; REC.id = null;
+    return keep;
+  }
+
+  async function recFinish() {
+    var id = REC.id;
+    var blob = new Blob(REC.chunks);
+    recCleanup();
+    if (!blob.size) { renderSettings(); toast("没录到声音"); return; }
+    try {
+      var arr = await blob.arrayBuffer();
+      var ac = new (window.AudioContext || window.webkitAudioContext)();
+      var buf = await ac.decodeAudioData(arr);
+      try { ac.close(); } catch (e) {}
+      if (!voicePack) voicePack = {};
+      voicePack[id] = wavFromBuffer(buf);
+      saveVoicePack();
+      renderSettings();
+      /* 录完马上放一遍，让人听着对不对 */
+      try { var a = new Audio(voicePack[id]); a.play().catch(function () {}); } catch (e) {}
+    } catch (e) {
+      renderSettings();
+      toast("这段没转成功，再录一次");
+    }
+  }
+
+  function voicePackSize() {
+    try { return Math.round(JSON.stringify(voicePack || {}).length / 1024); } catch (e) { return 0; }
+  }
+
+  /* 导出成一个文件。放进 _上传这个文件夹 跟游戏一起传，
+     全家的手机打开就都是金坛话了。 */
+  function exportVoicePack() {
+    if (!voicePackCount()) { toast("还一条都没录"); return; }
+    try {
+      var blob = new Blob([JSON.stringify(voicePack)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = VOICE_PACK_FILE;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+      toast("导出好了，把 " + VOICE_PACK_FILE + " 放进上传文件夹");
+    } catch (e) { toast("导不出来"); }
+  }
+
+  function importVoicePack() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".json,application/json";
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var d = null;
+        try { d = JSON.parse(fr.result); } catch (e) {}
+        if (!d || typeof d !== "object" || Array.isArray(d) || !Object.keys(d).length) {
+          toast("这个文件读不出来"); return;
+        }
+        voicePack = d;
+        saveVoicePack();
+        renderSettings();
+        toast("导入好了，共 " + voicePackCount() + " 条");
+      };
+      fr.readAsText(f);
+    };
+    inp.click();
+  }
+
   function speak(text) {
-    if (!settings.voice || !window.speechSynthesis) return;
+    if (!voiceOn() || !window.speechSynthesis || !text) return;
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -2684,6 +2991,12 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       if (!isFinite(n) || n < lo || n > hi) return dft;
       return n;
     }
+    /* 语音从开关升级成三档：关 / 只报碰杠胡 / 每张牌都报。
+       老存档里存的是 true / false，迁过来 */
+    if (settings.voice === true) settings.voice = "act";
+    else if (settings.voice === false) settings.voice = "off";
+    if (["off", "act", "all"].indexOf(settings.voice) < 0) settings.voice = "act";
+
     settings.difficulty = DIFF[settings.difficulty] ? settings.difficulty : "rookie";
     settings.luck       = LUCK[settings.luck] ? settings.luck : "fair";
     settings.speed      = SPEED[settings.speed] ? settings.speed : "mid";
@@ -2835,6 +3148,14 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       '<p>有新版本时首页会冒出一条「有新版本，点这里更新」，点一下就好。' +
       '就算不点，<strong>下次重新打开也会自动换成新版</strong>，不会一直卡在旧的。</p>' +
       '<p>更新不会动你的身家和战绩，存档和程序是分开存的。</p>' +
+      '<h3>让它说金坛话</h3>' +
+      '<p>手机自带的语音只有普通话，没有金坛话——吴语这一支任何一家语音引擎都不支持。' +
+      '想听乡音只能找个会说的人录一遍：进<strong>设置 → 金坛话语音</strong>，' +
+      '照着 40 条词一条条点「录」，每条录 1.8 秒自动停，十几分钟录完。</p>' +
+      '<p>录完点「导出语音包」，把得到的 <span class="mono">语音包.json</span> ' +
+      '跟游戏文件一起传上去，全家的手机就都是金坛话了。' +
+      '只录一部分也行，没录的自动用普通话顶上。</p>' +
+
       '<h3>牌面出处</h3>' +
       '<p>牌面用的是实物麻将的画法，来自 Wikimedia Commons 的中式麻将牌矢量图' +
       '（作者 Shizhao，已放入公有领域）。筒子的铜钱花瓣纹、萬字的靛蓝数字、' +
@@ -3199,6 +3520,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   function netClose() {
     NET.want = false;
+    clearFlowerWait();
     NET.gen = (NET.gen || 0) + 1;   /* 让还在路上的那次连接自己作废 */
     if (NET.retryTimer) { clearTimeout(NET.retryTimer); NET.retryTimer = null; }
     stopHeartbeat();
@@ -3423,6 +3745,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.wall = fakeTiles(m.wall);
     game.current = rel(m.dealer);
     game.phase = "discard";
+    clearFlowerWait();   /* 上一盘要是停在补花上，标记不清会把新的一盘也锁死 */
     game.drewThisTurn = true;
     sortHand(game.players[0]);
     showScreen("table");
@@ -3452,10 +3775,12 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.current = rel(m.current);
     game.lastDiscard = m.lastDiscard || null;
     game.lastFrom = m.lastFrom >= 0 ? rel(m.lastFrom) : -1;
-    game.phase = "discard";
+    game.phase = m.needFlower ? "flower" : "discard";
+    clearFlowerWait();   /* 掉线期间可能已经被兜底补掉了，旧标记一律作废 */
     sortHand(game.players[0]);
     showScreen("table");
     render();
+    if (m.needFlower) { netAskFlower(); setMsg("接上了，先把花补掉", true); return; }
     netRefreshBar();
     setMsg("接上了", true);
   }
@@ -3466,10 +3791,12 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.wall = fakeTiles(m.wall);
     for (var i = 0; i < 4; i++) if (i !== 0) game.players[i].hand = fakeTiles(m.counts[abs(i)]);
     game.phase = m.phase || "discard";
+    /* 我这轮还欠着一张花：保住「补花」按钮，别被这条 turn 冲掉 */
+    if (game.phase === "flower" && game.current === 0) { netAskFlower(); return; }
     setClaim("");
     render();
     netRefreshBar();
-    if (game.current === 0) { speak("该你了"); sfx("turn"); setMsg("该你出牌了", true); }
+    if (game.current === 0) { say("act_your"); sfx("turn"); setMsg("该你出牌了", true); }
     else setMsg("轮到 " + game.players[game.current].name, false);
   }
 
@@ -3484,7 +3811,43 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     sortHand(game.players[0]);
     sfx("draw");
     render();
+    /* 服务端摸到花会停下来等我亲手补，不再替我补掉 */
+    if (m.needFlower) { netAskFlower(); return; }
     netRefreshBar();
+  }
+
+  function netAskFlower() {
+    var p = game.players[0], fl = null;
+    for (var i = 0; i < p.hand.length; i++) if (isFlower(p.hand[i].key)) { fl = p.hand[i]; break; }
+    if (!fl) { netRefreshBar(); return; }
+    ui.selected = null;
+    ui.hintId = null;
+    ui.flowerId = fl.id;
+    ui.flowerWait = true;   /* 联机下只是个标记，真正推进靠服务端回包 */
+    setAct("");
+    setClaim('<button type="button" class="btn-gang pop" data-act="flower">补花 ' + FLOWER[fl.key] + "</button>");
+    setMsg("摸到「" + FLOWER[fl.key] + "」，点补花", true);
+    sfx("flower");
+    render();
+  }
+
+  function netSendFlower() {
+    if (!ui.flowerWait) return;
+    ui.flowerWait = null;
+    ui.flowerId = null;
+    setClaim("");
+    netSend({ t: "act", a: "flower" });
+  }
+
+  /* 把挂起的补花状态抹掉。
+     发牌、重连、一盘结束这三处都必须调 —— 否则会留下一个死结：
+     人欠着花掉了线，服务端 30 秒兜底替他补掉并出了牌，
+     他连回来 needFlower 已经是 false，可 ui.flowerWait 还留着 true，
+     netRefreshBar() 第一行就 return，出牌按钮再也不出来，这一局就废了。 */
+  function clearFlowerWait() {
+    if (typeof ui.flowerWait === "function") { try { ui.flowerWait(); } catch (e) {} }
+    ui.flowerWait = null;
+    ui.flowerId = null;
   }
 
   function netDrewOther(m) {
@@ -3516,6 +3879,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       if (game.players[0].passed.indexOf(m.tile.key) < 0) game.players[0].passed.push(m.tile.key);
     }
     sfx("discard");
+    sayTile(m.tile.key);
     setMsg(game.players[who].name + " 打出 " + tileName(m.tile.key), false);
     setClaim("");
     render();
@@ -3581,6 +3945,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   function netOver(m) {
     if (!game) return;
     game.over = true;
+    clearFlowerWait();   /* 这盘结束了，别把补花按钮和标记留到结算画面上 */
     game.nextDealer = rel(m.nextDealer);
     var rv = m.reveal;
     for (var i = 0; i < 4; i++) {
@@ -3666,6 +4031,8 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   function netRefreshBar() {
     if (!game || !game.online) return;
     if (game.over || game.current !== 0) { setAct(""); return; }
+    /* 还欠着花，先别给出牌/胡/杠的按钮 */
+    if (ui.flowerWait || game.phase === "flower") { setAct(""); return; }
     var p = game.players[0];
     var btns = "";
     if (game.drewThisTurn && canWinHand(p, null)) {
@@ -3684,7 +4051,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var t = null, p = game.players[0];
     for (var i = 0; i < p.hand.length; i++) if (p.hand[i].id === ui.selected) t = p.hand[i];
     if (!t) { toast("请先点选一张牌"); return; }
-    if (isFlower(t.key)) { toast("花牌会自动补，不能打出"); return; }
+    if (isFlower(t.key)) { toast("花牌点「补花」亮出去，不能当废牌打"); return; }
     netSend({ t: "act", a: "discard", id: t.id });
     ui.selected = null; ui.hintId = null;
     setAct("");
@@ -4040,6 +4407,42 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     try { reg.update(); } catch (e) {}
   }
 
+  /* 录音面板。给会说金坛话的人用的 —— 通常是子女帮着录，不是外婆自己录。 */
+  function voicePanel() {
+    var done = voicePackCount(), total = VOICE_LIST.length;
+    var h = '<p class="set-hint">手机自带的语音只有普通话，没有金坛话。' +
+      "想让外婆听到乡音，得找个会说金坛话的人照着下面念一遍 —— " +
+      "点「录」，它录 1.8 秒自动停，录完立刻放给你听，不满意再点一次重录。" +
+      "全部录完点「导出」，把文件跟游戏一起传上去，全家的手机就都是金坛话了。</p>";
+    h += '<div class="vc-top"><div class="vc-prog">已录 <b>' + done + "</b> / " + total +
+         (done ? "　约 " + voicePackSize() + " KB" : "") + "</div>";
+    h += '<div class="bk-btns">' +
+         '<button type="button" class="icon-btn" id="vc-export"' + (done ? "" : " disabled") + '>导出语音包</button>' +
+         '<button type="button" class="icon-btn" id="vc-import">导入</button>' +
+         (done ? '<button type="button" class="icon-btn danger" id="vc-clear">全部清掉</button>' : "") +
+         "</div></div>";
+    h += '<div class="vc-list">';
+    for (var i = 0; i < VOICE_LIST.length; i++) {
+      var it = VOICE_LIST[i];
+      var got = hasClip(it.id);
+      var rec = REC.on && REC.id === it.id;
+      h += '<div class="vc-row' + (got ? " got" : "") + (rec ? " rec" : "") + '">' +
+           '<span class="vc-t">' + esc(it.text) + "</span>" +
+           '<span class="vc-mark">' + (got ? "✓" : "") + "</span>" +
+           '<button type="button" class="icon-btn tiny" data-rec="' + it.id + '"' +
+           (REC.on && !rec ? " disabled" : "") + '>' + (rec ? "录音中…" : (got ? "重录" : "录")) + "</button>" +
+           (got ? '<button type="button" class="icon-btn tiny" data-play="' + it.id + '">听</button>' : "") +
+           "</div>";
+    }
+    h += "</div>";
+    h += '<p class="set-hint">念的时候手机离嘴 20 公分左右，安静一点的房间效果最好。' +
+         "只录一部分也行，录了的用金坛话，没录的自动用普通话顶上。</p>";
+    h += '<p class="set-hint">拿不准发音的话，B 站上「语言狂魔Mark」有一期' +
+         "《江苏金坛话入门100句》可以对照着听。另外金坛话分两片 —— " +
+         "东边是吴语、西边是江淮官话，按外婆自己那一片的口音录就对了。</p>";
+    return h;
+  }
+
   function renderSettings() {
     var s = settings;
     /* 顺序按「多久用一次」排：眼睛看不清是第一位要解决的，
@@ -4063,7 +4466,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       rowSeg("出牌倒计时", "timer",
         [["0", "不限时"], ["120", "2分钟"], ["90", "90秒"], ["60", "60秒"],
          ["45", "45秒"], ["30", "30秒"]]) +
-      rowSeg("语音播报", "voice", [["1", "开"], ["0", "关"]]) +
+      rowSeg("语音播报", "voice",
+        [["off", "关"], ["act", "只报碰杠胡"], ["all", "每张牌都报"]]) +
+      '<p class="set-hint">' + (voicePackCount()
+        ? "现在用的是录好的金坛话（" + voicePackCount() + " 条）。"
+        : "现在是手机自带的普通话。想听金坛话，展开下面「金坛话语音」录一遍。") + "</p>" +
       rowSeg("牌桌音效", "sound", [["1", "开"], ["0", "关"]]) +
       rowSeg("震动反馈", "vibrate", [["1", "开"], ["0", "关"]]) +
       rowSeg("打牌时屏幕常亮", "awake", [["1", "开"], ["0", "关"]]) +
@@ -4087,6 +4494,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
           '　<button type="button" class="icon-btn" id="cap-reset" style="min-width:auto;min-height:36px;padding:0 12px">按公式重算</button></p>' +
           wealthPanel()
         : "") +
+
+      '<h3 class="fold' + (ui.setOpen.voice ? " open" : "") + '" id="set-voice-fold">' +
+      "金坛话语音" + (voicePackCount() ? "（已录 " + voicePackCount() + " 条）" : "") +
+      "<span class=\"fold-i\">▾</span></h3>" +
+      (ui.setOpen.voice ? voicePanel() : "") +
 
       '<h3 class="fold' + (ui.setOpen.bk ? " open" : "") + '" id="set-bk-fold">' +
       "备份存档<span class=\"fold-i\">▾</span></h3>" +
@@ -4148,7 +4560,8 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     normal: "路子清楚，偶尔失误。",
     master: "记牌、算进张、挑安全牌打。非常小心才赢得了。"
   };
-  var BOOL_SET = { voice: 1, sound: 1, counter: 1, vibrate: 1, awake: 1 };
+  /* voice 已经从开关变成三档字符串，不在这里 */
+  var BOOL_SET = { sound: 1, counter: 1, vibrate: 1, awake: 1 };
   var NUM_SET = { timer: 1 };
   function rowSeg(label, key, opts) {
     var b = "";
@@ -4164,11 +4577,29 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   function bindSettings() {
     document.getElementById("set-body").onclick = function (e) {
       var t = e.target;
-      var fold = t.closest && t.closest("#set-adv-fold, #set-bk-fold, #set-srv-fold");
+      var fold = t.closest && t.closest("#set-adv-fold, #set-voice-fold, #set-bk-fold, #set-srv-fold");
       if (fold) {
-        var key = fold.id === "set-adv-fold" ? "adv" : fold.id === "set-bk-fold" ? "bk" : "srv";
+        var key = fold.id === "set-adv-fold" ? "adv"
+                : fold.id === "set-voice-fold" ? "voice"
+                : fold.id === "set-bk-fold" ? "bk" : "srv";
         ui.setOpen[key] = !ui.setOpen[key];
         renderSettings();
+        return;
+      }
+      var recId = t.getAttribute && t.getAttribute("data-rec");
+      if (recId) { recStart(recId); return; }
+      var playId = t.getAttribute && t.getAttribute("data-play");
+      if (playId) {
+        try { var a = new Audio(voicePack[playId]); a.play().catch(function () {}); } catch (e) {}
+        return;
+      }
+      if (t.id === "vc-export") { exportVoicePack(); return; }
+      if (t.id === "vc-import") { importVoicePack(); return; }
+      if (t.id === "vc-clear") {
+        if (!confirm("把录好的金坛话全部删掉？\n删了就回到手机自带的普通话。")) return;
+        voicePack = {};
+        try { localStorage.removeItem(VOICE_KEY); } catch (e) {}
+        renderSettings(); toast("清掉了");
         return;
       }
       if (t.id === "bk-make") {
@@ -4189,7 +4620,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
         settings.tsize = "big";       /* 牌最大，手牌自动排两行 */
         settings.speed = "slow";      /* 电脑慢一点，看得清谁打了什么 */
         settings.timer = 0;           /* 不催 */
-        settings.voice = true;        /* 碰杠胡念出来 */
+        settings.voice = "all";       /* 每张牌都念出来，眼睛不好也跟得上 */
         settings.sound = true;
         settings.counter = true;      /* 还剩几张写在旁边 */
         settings.awake = true;        /* 不黑屏 */
@@ -4231,6 +4662,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
         else if (NUM_SET[k2]) settings[k2] = parseInt(v, 10) || 0;
         else settings[k2] = v;
         saveSettings(); renderSettings();
+        if (k2 === "voice" && voiceOn()) say("act_peng");   /* 当场听一下是什么声音 */
         if (k2 === "sound" && settings.sound) sfx("peng");
         if (k2 === "vibrate" && settings.vibrate) buzz([0, 26, 55, 26]);
         if (k2 === "awake") keepAwake(!!settings.awake && ui.screen === "table");
@@ -4403,6 +4835,13 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var el = e.target.closest(".mj");
     if (!el || el.classList.contains("back")) return;
     if (!game || game.over || ui.paused) return;
+    /* 等补花的时候，点那张花就等于亮出去 */
+    if (ui.flowerWait) {
+      var fid = parseInt(el.getAttribute("data-id"), 10);
+      if (fid !== ui.flowerId) { toast("先把花补掉"); return; }
+      if (game.online) netSendFlower(); else doHumanFlower();
+      return;
+    }
     if (game.current !== 0 || ui.claimWait) {
       toast("还没轮到你，请等一等");
       return;
@@ -4472,6 +4911,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   function refreshActBar() {
     if (game && game.online) { netRefreshBar(); return; }
+    if (ui.flowerWait) { setAct(""); return; }   /* 补花期间不给出牌按钮 */
     if (!game || game.over || ui.claimWait || game.current !== 0) {
       if (!ui.claimWait) setAct("");
       return;
@@ -4502,6 +4942,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var t = e.target.closest("button");
     if (!t) return;
     var act = t.getAttribute("data-act");
+    if (act === "flower") {
+      if (game && game.online) netSendFlower();
+      else doHumanFlower();
+      return;
+    }
     if (act && act.indexOf("pickgang-") === 0) {
       var gix = parseInt(act.slice(9), 10);
       setClaim("");
@@ -4539,7 +4984,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var tile = null;
     for (var i = 0; i < p.hand.length; i++) if (p.hand[i].id === ui.selected) tile = p.hand[i];
     if (!tile) { toast("请先点选一张牌，再按打出"); return; }
-    if (isFlower(tile.key)) { toast("花牌会自动补，不能打出"); return; }
+    if (isFlower(tile.key)) { toast("花牌点「补花」亮出去，不能当废牌打"); return; }
     if (ui.discardWait) {
       var fn = ui.discardWait;
       ui.discardWait = null;
@@ -4586,7 +5031,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       showTileCount(null);
       ui.discardWait = resolve;
       setMsg("该你出牌了", true);
-      speak("该你了"); sfx("turn");
+      say("act_your"); sfx("turn");
       refreshActBar();
       render();
       startTimer(resolve);
@@ -4636,19 +5081,78 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   }
 
   /* —— 游戏流程 —— */
+
+  /* 手动补花：摸到花不再瞬间换掉，而是停下来等人亲手亮出去，
+     亮完再从牌尾补一张 —— 跟真牌桌上的动作顺序一致。
+     电脑和掉线托管的座位仍然自动走，节奏不变。 */
+  function waitHumanFlower(tile) {
+    return new Promise(function (resolve) {
+      ui.selected = null;
+      ui.hintId = null;
+      ui.flowerId = tile.id;
+      ui.flowerWait = resolve;
+      showTileCount(null);
+      setAct("");
+      setClaim('<button type="button" class="btn-gang pop" data-act="flower">补花 ' + FLOWER[tile.key] + "</button>");
+      /* 提示要短。大牌面＋特大字时牌桌只剩 180px 高，中间那块信息框
+         放得下一行，放两行就会被手牌区切掉半截。
+         旁边按钮上已经写着「补花 梅」，不必再重复怎么点。 */
+      setMsg("摸到「" + FLOWER[tile.key] + "」，点补花", true);
+      sfx("flower");
+      render();
+      startFlowerTimer(resolve);
+    });
+  }
+
+  /* 跟出牌一样给个倒计时，超时就替她亮出去，别让牌局卡住 */
+  function startFlowerTimer(resolveFlower) {
+    clearTimer();
+    if (!settings.timer) return;
+    timerLeft = settings.timer;
+    timerId = setInterval(function () {
+      if (ui.paused) return;
+      timerLeft--;
+      if (timerLeft <= 0) {
+        clearTimer();
+        if (ui.flowerWait === resolveFlower) doHumanFlower();
+      } else setMsg("点补花　" + timerLeft + "秒", true);
+    }, 1000);
+  }
+
+  function doHumanFlower() {
+    if (typeof ui.flowerWait !== "function") return;   /* 联机走 netSendFlower */
+    var fn = ui.flowerWait;
+    ui.flowerWait = null;
+    ui.flowerId = null;
+    clearTimer();
+    setClaim("");
+    fn();
+  }
+
   async function replaceFlowers(p) {
     var g = gen;
+    var byHand = !game.online && p === game.players[0];
     while (still(g)) {
       var ix = -1;
       for (var i = 0; i < p.hand.length; i++) if (isFlower(p.hand[i].key)) { ix = i; break; }
       if (ix < 0) return "ok";
+      if (byHand) {
+        game.phase = "flower";
+        render();
+        await waitHumanFlower(p.hand[ix]);
+        if (!still(g)) return "abort";
+        /* 等待期间手牌可能被重排，重新定位那张花 */
+        ix = -1;
+        for (var k = 0; k < p.hand.length; k++) if (isFlower(p.hand[k].key)) { ix = k; break; }
+        if (ix < 0) return "ok";
+      }
       var fl = p.hand.splice(ix, 1)[0];
       p.flowers.push(fl);
       sortHand(p);
       render();
       sfx("flower");
       setMsg(p.name + " 补花 " + FLOWER[fl.key], false);
-      await sleep(380);
+      await sleep(byHand ? 240 : 380);
       if (p.flowers.length >= 8) {
         await endEightFlowers(p);
         return "eight";
@@ -4685,7 +5189,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.phase = "discard";
     game.undo = null;
     sortHand(p);
-    speak("碰"); sfx("peng");
+    say("act_peng"); sfx("peng");
     setMsg(NAMES[pi] + " 碰", true);
   }
 
@@ -4698,7 +5202,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.lastDiscard = null;
     game.current = pi;
     game.undo = null;
-    speak("杠"); sfx("gang");
+    say("act_gang"); sfx("gang");
     setMsg(NAMES[pi] + " 杠", true);
     var r = await drawKongReplace(p);
     return r;
@@ -4710,7 +5214,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     p.melds.push({ type: "gang", key: key, concealed: true, from: pi, added: false });
     p.guoShui = false; p.passed = [];
     game.undo = null;
-    speak("杠"); sfx("gang");
+    say("act_gang"); sfx("gang");
     setMsg(NAMES[pi] + " 暗杠", true);
     return await drawKongReplace(p);
   }
@@ -4728,7 +5232,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     meld.concealed = false;
     p.guoShui = false; p.passed = [];
     game.undo = null;
-    speak("杠"); sfx("gang");
+    say("act_gang"); sfx("gang");
     setMsg(NAMES[pi] + " 补杠", true);
     var rob = await resolveRobKong(pi, key);
     if (rob === "end") return "end";
@@ -4768,6 +5272,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     sortHand(p);
     ui.dropId = tile.id;          /* 让这张牌落到牌河时带个动画 */
     sfx("discard");
+    sayTile(tile.key);
     setMsg(NAMES[pi] + " 打出 " + tileName(tile.key), false);
   }
 
@@ -4899,7 +5404,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   async function doWins(winners, flags) {
     game.over = true;
     game.undo = null;
-    speak("胡了");
+    say((flags.selfDraw || flags.kongDraw) ? "act_zimo" : "act_hu");
     var meWon = false;
     for (var wi = 0; wi < winners.length; wi++) if (winners[wi].i === 0) meWon = true;
     sfx(meWon ? "hu" : "lose");
@@ -4955,6 +5460,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     game.over = true;
     game.nextDealer = game.dealer;
     game.settle = { type: "liuju", reports: [], pays: [0, 0, 0, 0], liuju: true };
+    say("act_liuju");
     setMsg("流局，荒庄", true);
     showSettle();
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
@@ -5496,6 +6002,8 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     ui.paused = false;
     ui.claimWait = null;
     ui.discardWait = null;
+    ui.flowerWait = null;
+    ui.flowerId = null;
     ui.selected = null;
     setClaim("");
     setAct("");
@@ -5893,11 +6401,20 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       ui.discardWait = null;
       fn2({ abort: true });
     }
+    if (ui.flowerWait) {
+      var fn3 = ui.flowerWait;
+      ui.flowerWait = null;
+      ui.flowerId = null;
+      setClaim("");
+      fn3();
+    }
     restore(snap);
     game.undo = null;
     ui.selected = null;
     ui.discardWait = null;
     ui.claimWait = null;
+    ui.flowerWait = null;
+    ui.flowerId = null;
     clearTimer();
     setMsg("已收回上一次出牌", true);
     saveGame();
@@ -5907,7 +6424,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   function unlockVoice() {
     audio();                     /* 首次点击时把音频上下文唤醒 */
-    if (voiceUnlocked || !window.speechSynthesis) return;
+    if (voiceUnlocked || !window.speechSynthesis || !voiceOn()) return;
     voiceUnlocked = true;
     try {
       var u = new SpeechSynthesisUtterance(" ");
@@ -5919,6 +6436,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   buildTileSprite();
   loadSettings();
+  loadVoicePack();
   loadWealth();
   loadProfile();
   setupPWA();

@@ -3,14 +3,17 @@
    策略：缓存优先 + 后台悄悄更新（stale-while-revalidate）——
    老人永远不会看到白屏或转圈，新版本在下次打开时自动生效。 */
 
-var CACHE = "jintan-mj-v16";
+var CACHE = "jintan-mj-v181";
 var ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  /* 金坛话录音包。没传这个文件也不影响 —— 抓不到会被下面的 catch 咽掉，
+     游戏自动退回手机自带的普通话。 */
+  "./语音包.json"
 ];
 
 self.addEventListener("install", function (e) {
