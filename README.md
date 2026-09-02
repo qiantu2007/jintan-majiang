@@ -173,19 +173,27 @@ cd "_服务端Pages"; npx wrangler pages deploy --branch production
 
 ### 二、游戏网页
 
-先构建，再把 `_上传这个文件夹` 里的 **8 个文件**传到 GitHub 仓库
-`qiantu2007/jintan-majiang` 的根目录（网页上传，覆盖同名文件）：
+一条命令：
 
-```
-index.html   sw.js   version.json   manifest.webmanifest
-icon-192.png   icon-512.png   apple-touch-icon.png   语音包.json
+```bash
+node 发版.mjs "这次改了什么"
 ```
 
-传完 GitHub Pages 一般 1～2 分钟生效。
+它按顺序做五件事，任何一步不对就停下并说清楚原因：
 
-> 本地仓库目前没有 remote。想省掉手动上传的话，可以把这个仓库和
-> `qiantu2007/jintan-majiang` 接起来，以后 `git push` 就等于发版 ——
-> 但那会改变现在的工作方式，没接之前照上面手动传。
+1. 构建
+2. 跑本地测试（红了就不发 —— 装到别人手机上的东西不该带着红灯出门）
+3. `git add -A` + 提交（用你给的那句说明）
+4. 推到 GitHub
+5. 等 Pages 生效，然后核对**线上**的网页版本和服务端版本
+
+最后会打一张核对表，两边版本号都对上才算完。
+
+> 以前是手动把 8 个文件拖到 GitHub 网页上。漏传一个不会有任何提示，
+> 线上是新是旧也看不出来。现在漏传不可能（推的是整个仓库），
+> 成没成看最后那张表。
+
+只想构建不想发版，还是 `node 构建.mjs`。
 
 ### 三、验收
 
