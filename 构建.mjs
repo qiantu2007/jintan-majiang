@@ -38,8 +38,13 @@ const DEPLOY = [
   "icon-192.png", "icon-512.png", "apple-touch-icon.png", "语音包.json"
 ];
 
-const read = (p) => readFileSync(p, "utf8");
-const write = (p, s) => writeFileSync(p, s, "utf8");
+/* 一律按 LF 读、按 LF 写。
+   .gitattributes 里写了 eol=lf，所以新 clone 出来的工作区是 LF，
+   而这台机器上的老文件是 CRLF。不统一的话，同一份 src/ 在两边会构建出
+   字节不同的 index.html，`--检查` 一 clone 就红 —— 实测过。
+   浏览器不在乎行尾，统一成 LF 最省事。 */
+const read = (p) => readFileSync(p, "utf8").replace(/\r\n/g, "\n");
+const write = (p, s) => writeFileSync(p, s.replace(/\r\n/g, "\n"), "utf8");
 
 /* ── 把 ESM 的壳剥掉 ───────────────────────────────────────────
    src/ 里的模块是真 ESM（Node 和 wrangler 直接 import 它们）。
@@ -61,7 +66,7 @@ function stripModuleSyntax(text, name) {
     out.push(line.replace(/^(\s*)export\s+/, "$1"));
   }
 
-  const body = out.join("\r\n");
+  const body = out.join("\n");
   const leak = body.match(/^\s*(?:import|export)\b.*/m);
   if (leak) throw new Error(`${name}: 还残留模块语法 → ${leak[0].trim()}`);
   return body;
@@ -86,7 +91,7 @@ for (const m of MODULES) {
 
 const tpl = read(join(SRC, "模板.html"));
 if (!tpl.includes("/*@@BUNDLE@@*/")) throw new Error("src/模板.html 里没有 /*@@BUNDLE@@*/ 占位");
-const html = tpl.replace("/*@@BUNDLE@@*/", pieces.join("\r\n"));
+const html = tpl.replace("/*@@BUNDLE@@*/", pieces.join("\n"));
 
 /* --检查：只比对，一个字都不写。用来挡住「改了 src/ 忘了重新构建就部署」。 */
 const 只检查 = process.argv.includes("--检查") || process.argv.includes("--check");
