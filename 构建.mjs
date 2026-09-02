@@ -88,28 +88,53 @@ const tpl = read(join(SRC, "模板.html"));
 if (!tpl.includes("/*@@BUNDLE@@*/")) throw new Error("src/模板.html 里没有 /*@@BUNDLE@@*/ 占位");
 const html = tpl.replace("/*@@BUNDLE@@*/", pieces.join("\r\n"));
 
-/* --检查：只比对，不写盘。用来挡住「改了 src/ 忘了重新构建就部署」。 */
+/* --检查：只比对，一个字都不写。用来挡住「改了 src/ 忘了重新构建就部署」。 */
 const 只检查 = process.argv.includes("--检查") || process.argv.includes("--check");
+const 不同步的 = [];
+const 派生 = [];
+
+/* 版本号只有一个源头：src/app.js 的 VERSION。下面每一处都是从它派生的，
+   别手动改。替换不到目标行就直接报错停下 —— 这个项目吃过太多次
+   「改一处漏一处」的亏，宁可当场炸也不要默默漏掉一处。 */
+function 同步(相对路径, 正则, 新内容, 说明) {
+  const p = join(ROOT, ...相对路径.split("/"));
+  if (!existsSync(p)) throw new Error(`找不到 ${相对路径}`);
+  const 原文 = read(p);
+  if (!正则.test(原文)) throw new Error(`${相对路径} 里找不到要同步的那一行（${说明}）`);
+  const 新文 = 原文.replace(正则, 新内容);
+  if (新文 === 原文) { 派生.push(`${相对路径} · ${说明}`); return; }
+  if (只检查) 不同步的.push(`${相对路径} · ${说明}`);
+  else write(p, 新文);
+  派生.push(`${相对路径} · ${说明}`);
+}
+
+同步("version.json", /"version":\s*"[^"]*"/, `"version": "${VERSION}"`, "版本");
+同步("sw.js", /var CACHE = "[^"]*";/, `var CACHE = "${CACHE_NAME}";`, "缓存名");
+同步("package.json", /"version":\s*"[^"]*"/, `"version": "${VERSION}"`, "版本");
+/* 服务端也带上版本：部署完在手机上打开 https://…/health 就能看出线上是哪一版，
+   不用进游戏翻设置页。两个服务端文件夹要一起部署，否则这个数字会骗人。 */
+同步("_服务端/worker.js", /const VERSION = "[^"]*";/, `const VERSION = "${VERSION}";`, "版本");
+同步("_服务端Pages/public/_worker.js", /const VERSION = "[^"]*";/, `const VERSION = "${VERSION}";`, "版本");
+
 if (只检查) {
   const 现有 = existsSync(join(ROOT, "index.html")) ? read(join(ROOT, "index.html")) : "";
-  if (现有 === html) {
-    console.log(`index.html 是最新的（v${VERSION}）`);
+  if (现有 !== html) 不同步的.unshift("index.html · 和 src/ 对不上");
+  /* 上传目录里的那份也得和根目录一致，否则部署出去的是旧的 */
+  for (const f of DEPLOY) {
+    const a = join(ROOT, f), b = join(OUT_DIR, f);
+    if (!existsSync(a)) continue;
+    if (!existsSync(b) || read(b) !== read(a)) 不同步的.push(`_上传这个文件夹/${f} · 落后于根目录`);
+  }
+  if (!不同步的.length) {
+    console.log(`全部是最新的（v${VERSION}）`);
     process.exit(0);
   }
-  console.error("index.html 和 src/ 对不上了 —— 跑一次 `node 构建.mjs`");
+  console.error("下面这些和 src/ 对不上，跑一次 `node 构建.mjs`：");
+  for (const x of 不同步的) console.error("  · " + x);
   process.exit(1);
 }
 
 write(join(ROOT, "index.html"), html);
-
-/* ── 版本号只有一个源头，另外两处由这里派生 ───────────────── */
-write(join(ROOT, "version.json"), `{ "version": "${VERSION}" }\r\n`);
-
-const swPath = join(ROOT, "sw.js");
-const sw = read(swPath);
-const swNew = sw.replace(/var CACHE = "[^"]*";/, `var CACHE = "${CACHE_NAME}";`);
-if (swNew === sw && !sw.includes(CACHE_NAME)) throw new Error("sw.js 里没找到 CACHE 声明");
-write(swPath, swNew);
 
 /* ── 同步到上传目录 ───────────────────────────────────────── */
 let copied = 0;
@@ -127,5 +152,6 @@ const lines = html.split("\n").length;
 
 console.log(`构建完成  v${VERSION}`);
 console.log(`  index.html   ${kb(Buffer.byteLength(html))}  ${lines} 行  sha ${sha}`);
-console.log(`  sw.js 缓存名 ${CACHE_NAME}`);
-console.log(`  已同步 ${copied} 个文件到 _上传这个文件夹`);
+console.log(`  版本号已写进 ${派生.length} 处：`);
+for (const x of 派生) console.log(`    · ${x}`);
+console.log(`  已拷 ${copied} 个文件到 _上传这个文件夹`);

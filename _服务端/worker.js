@@ -13,6 +13,10 @@
    改一次规则要记得改两处，漏一处就是服务端判胡和客户端算番对不上。 */
 import { makeWall, shuffle, isFlower, canWinShape, countKey } from "../src/rules.js";
 
+/* 由 构建.mjs 从 src/app.js 的 VERSION 同步过来，别手动改。
+   /health 会把它报出来，部署完拿手机开一下就知道线上是哪一版。 */
+const VERSION = "1.19.0";
+
 /* 洗牌用 crypto，不是 Math.random —— 服务器自己也猜不到牌序。
    单机那边不需要这个强度，所以随机源是传进去的，不写死在 rules 里。 */
 function cryptoRand() {
@@ -772,7 +776,7 @@ export default {
     }
 
     if (url.pathname === "/health") {
-      return new Response("ok", { headers: cors });
+      return new Response("ok " + VERSION, { headers: cors });
     }
 
     return new Response("金坛麻将联机服务", { headers: cors });

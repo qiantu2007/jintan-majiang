@@ -17,9 +17,14 @@ function connect(code, token, name, opts = {}) {
               (opts.create ? "&create=1" : "");
   const ws = new WebSocket(url);
   const st = { ws, name, discards: 0, aiAsks: 0, over: null, dealt: false,
+               seat: -1, seats: null, current: -1,
                driveAI: opts.driveAI !== false };
   ws.addEventListener("message", (ev) => {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
+    /* 记住座位表和当前轮到谁 —— 【甲】要靠这个挑掉线的时机 */
+    if (m.t === "room") { st.seats = m.seats; if (m.you != null) st.seat = m.you; }
+    if (m.t === "turn") st.current = m.who;
+    if (m.t === "deal") st.current = m.dealer;
     if (m.t === "deal" || m.t === "resume") {
       st.dealt = true;
       /* 手上 14 / 11 / 8 / 5 张就该自己出牌了，这一刻不会再有 drew 送来：
@@ -78,18 +83,35 @@ async function openRoom(mateDrives) {
 
 let fail = 0;
 
-/* ── 甲：房主走了，朋友接手 ── */
+/* ── 甲：房主走了，朋友接手 ──
+   要测的是「本该由房主替电脑算的活儿，房主一走朋友能不能顶上」。
+   所以掉线的时机必须挑在**轮到电脑**的时候。
+   要是挑在轮到房主自己的时候掉线，牌局本来就该等他（服务端给掉线的
+   真人 30 秒再兜底），压根没有电脑请求可接手 —— 这条测试以前固定睡
+   5 秒就下结论，撞上这种时机就会误判成「没人接手」。 */
 async function caseTakeover() {
   console.log("【甲】房主掉线，屋里还有朋友");
   const { host, mate } = await openRoom(true);   /* 朋友也会代算 */
   if (!host.dealt) { console.log("  ✗ 没发牌"); fail++; return; }
-  await sleep(2500);
+
+  const 是电脑的回合 = (st) => st.seats && st.current >= 0 &&
+                              st.seats[st.current] && st.seats[st.current].ai;
+  let 截止 = Date.now() + 20000;
+  while (Date.now() < 截止 && !是电脑的回合(mate) && !mate.over) await sleep(120);
+  if (!是电脑的回合(mate)) {
+    console.log("  ✗ 20 秒内没轮到电脑，没法测接手"); fail++; mate.ws.close(); return;
+  }
+  console.log(`  等到轮到电脑（${mate.current} 号位）了，让房主掉线`);
+
   const a = mate.discards, asksBefore = mate.aiAsks;
   host.ws.close();
   console.log("  房主掉线，看朋友接不接得住…");
-  await sleep(5000);
+  /* 盯到接手为止，最多 20 秒。不用固定窗口 —— 出牌节奏本来就有快有慢。 */
+  截止 = Date.now() + 20000;
+  while (Date.now() < 截止 &&
+         !(mate.discards > a && mate.aiAsks > asksBefore) && !mate.over) await sleep(200);
   const b = mate.discards, asksAfter = mate.aiAsks;
-  console.log(`  房主走后 5 秒：出了 ${b - a} 张，朋友收到 ${asksAfter - asksBefore} 次电脑请求`);
+  console.log(`  房主走后：出了 ${b - a} 张，朋友收到 ${asksAfter - asksBefore} 次电脑请求`);
   if (b - a > 0 && asksAfter > asksBefore) console.log("  ✓ 朋友接手了，牌局没停");
   else { console.log("  ✗ 没人接手，卡住了"); fail++; }
   mate.ws.close();

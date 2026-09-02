@@ -1,6 +1,7 @@
 # wrangler 的本地状态，每台机器不一样，不进仓库
 .wrangler/
 node_modules/
+_dev.log
 
 # 系统垃圾
 Thumbs.db

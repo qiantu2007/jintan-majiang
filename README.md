@@ -59,8 +59,21 @@ node 构建.mjs
 | 一份的是什么 | 在哪 | 谁在看着 |
 |---|---|---|
 | 牌型判定 | `src/rules.js`，服务端 `import` 同一个文件 | `_测试_规则.mjs` 比对两端答案 |
-| 版本号 | `src/app.js` 的 `VERSION` | `构建.mjs` 生成另外两处 |
+| 版本号 | `src/app.js` 的 `VERSION` | `构建.mjs` 生成另外 5 处 |
 | 联机消息类型 | `src/protocol.js` 登记 | `_测试_协议.mjs` 核对两端代码 |
+
+版本号派生到这 5 个地方，**一个都别手动改**：
+
+```
+version.json                    网页查更新用
+sw.js 的 CACHE                  缓存名，变了手机才会拉新版
+package.json 的 version
+_服务端/worker.js               /health 报出来
+_服务端Pages/public/_worker.js  /health 报出来
+```
+
+`node 构建.mjs --检查` 会把这 5 处连同 `index.html` 和 `_上传这个文件夹` 一起核一遍，
+有一处对不上就退出码 1。
 
 第三条尤其值得留意：消息类型对不上是**无声**的——服务端照发，客户端不认识
 就丢掉，牌局停在那儿，控制台一片干净，而且只有真的四个人连上打才会暴露。
@@ -110,12 +123,57 @@ node 构建.mjs --检查
 
 ## 部署
 
-**网页**：把 `_上传这个文件夹` 整个拖到 Cloudflare Pages。
+一共三个东西要上传，**顺序不能反**：先服务端（两个文件夹一起），后网页。
+服务端往往兼容老客户端；反过来新网页发的消息老服务端不认识，牌局会卡在那儿。
 
-**联机服务**：分两段部署，细节和「为什么不能合成一个」见
-[`_服务端Pages/部署步骤.md`](_服务端Pages/部署步骤.md)。一句话版本：
-`workers.dev` 这个后缀在国内 DNS 和 TLS 两层都被拦，`pages.dev` 是干净的，
-所以要用 Pages 当门、Worker 放房间逻辑。
+### 现状
+
+| 部署到哪 | 是什么 | 状态 |
+|---|---|---|
+| `jintan-mahjong`（Worker） | 房间逻辑（`Room` 这个 Durable Object） | 已部署 |
+| `jintan-mj.pages.dev`（Pages） | 联机入口，转发给上面那个 Worker | 已部署 |
+| ？（Pages） | **游戏网页本身** | **还没部署过** |
+
+> 注意 `jintan-mj.pages.dev` 是**联机服务器**，不是游戏。打开它只会看到
+> 一行「金坛麻将联机服务」。游戏网页需要一个**另外的** Pages 项目
+> （项目名不能重复），比如 `jintan-majiang`。
+
+### 一、服务端（改了 `_服务端/` 或 `_服务端Pages/` 才需要）
+
+两个文件夹要**一起**部署——`/health` 报的版本号是各报各的，
+只更新一个会让那个数字骗人。
+
+```bash
+cd "_服务端"; npx wrangler deploy
+```
+
+```bash
+cd "_服务端Pages"; npx wrangler pages deploy
+```
+
+第一条打印出来的 `workers.dev` 网址**忽略掉**，国内进不去也用不到。
+为什么要分两段、为什么不能合成一个，见
+[`_服务端Pages/部署步骤.md`](_服务端Pages/部署步骤.md)。
+
+### 二、游戏网页
+
+```bash
+node 构建.mjs; npx wrangler pages deploy "_上传这个文件夹" --project-name jintan-majiang --branch main
+```
+
+得到 `https://jintan-majiang.pages.dev`。手机打开它，浏览器菜单里选
+「添加到主屏幕」，之后就是一个能离线打的 App。
+
+### 三、验收
+
+| 打开这个 | 应该看到 |
+|---|---|
+| `https://jintan-mj.pages.dev/health` | `ok 1.19.0`（服务端版本） |
+| `https://jintan-majiang.pages.dev/version.json` | `{ "version": "1.19.0" }`（网页版本） |
+| 游戏首页右下角 | `v1.19.0` |
+| 游戏里「和朋友一起打 → 检查网络」 | 打勾 |
+
+两个版本号对上了，才算真的都部署到位。
 
 ---
 

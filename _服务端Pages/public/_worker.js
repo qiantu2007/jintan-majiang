@@ -11,6 +11,10 @@
    · 这里只做入口，通过 ROOM 绑定把请求转进去
    两边跑在同一个 Cloudflare 账号里，内部调用，不经过公网。 */
 
+/* 由 构建.mjs 从 src/app.js 的 VERSION 同步过来，别手动改。
+   /health 会把它报出来，部署完拿手机开一下就知道线上是哪一版。 */
+const VERSION = "1.19.0";
+
 const CODE_CHARS = "ACDEFGHJKLMNPQRSTUVWXY3479";  /* 去掉了容易看错的 0O1IB8Z2S6 */
 function makeCode() {
   const r = new Uint8Array(5);
@@ -30,9 +34,11 @@ export default {
     };
     if (req.method === "OPTIONS") return new Response(null, { headers: cors });
 
-    /* 客户端拿这个判断服务器通不通，要快、要能跨域 */
+    /* 客户端拿这个判断服务器通不通，要快、要能跨域。
+       客户端只看 HTTP 状态码、不读内容，所以后面跟个版本号是安全的，
+       老版本的客户端一样认。人拿浏览器打开就能看出线上部署的是哪一版。 */
     if (url.pathname === "/health") {
-      return new Response("ok", { headers: cors });
+      return new Response("ok " + VERSION, { headers: cors });
     }
 
     /* 开房：分配一个不重复的房间号 */
