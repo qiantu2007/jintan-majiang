@@ -1,0 +1,14 @@
+{
+  "name": "jintan-mahjong",
+  "version": "1.18.1",
+  "private": true,
+  "description": "常州金坛麻将 · 单机 + 联机",
+  "type": "module",
+  "scripts": {
+    "build": "node 构建.mjs",
+    "check": "node 构建.mjs --检查",
+    "test": "node _测试_规则.mjs && node _服务端/_测试_补花死结.mjs",
+    "dev": "python -m http.server 8765",
+    "server": "npx wrangler dev --port 8787 --local --config _服务端/wrangler.toml"
+  }
+}
