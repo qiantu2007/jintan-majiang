@@ -21,9 +21,16 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 const SRC = join(ROOT, "src");
 const OUT_DIR = join(ROOT, "_上传这个文件夹");
 
-/* 顺序有讲究：rules 最先（KEYS34 在加载时就要填好），app 最后（它的顶层语句
-   依赖前面所有函数已经声明）。中间三个互不干涉。 */
-const MODULES = ["rules.js", "score.js", "ai.js", "tiles.js", "app.js"];
+/* 顺序有讲究，改之前先看懂这两条：
+   1. rules 必须最先 —— KEYS34 是在加载时用循环填出来的。
+   2. app 必须最后 —— 结尾那段事件绑定和启动代码要等前面全部声明完。
+   中间这几个的相对顺序也不能乱：pages / net / table 里各有几句顶层的
+   addEventListener，同一个元素上谁先绑谁先跑，这个顺序和拆分前是一致的。 */
+const MODULES = [
+  "rules.js", "score.js", "ai.js", "tiles.js",
+  "feedback.js", "store.js", "pages.js", "net.js", "table.js", "flow.js",
+  "app.js"
+];
 
 /* 部署要带上的文件。index.html 是构建产物，其余是原样拷。 */
 const DEPLOY = [
