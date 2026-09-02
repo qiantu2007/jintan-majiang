@@ -415,7 +415,7 @@ html, body {
 .st.ok   { color: #08331d; background: #6fd08e; }
 .st.wait { color: #5a4400; background: #e8c455; }
 .st.off  { color: #fff; background: var(--hu); }
-/* 「小按钮」也得让老人一戳就中：36px 是手指的下限，别再往下压了 */
+/* 「小按钮」也得一戳就中：36px 是手指的下限，别再往下压了 */
 .icon-btn.tiny { min-width: auto; min-height: calc(36px * var(--fs)); padding: 0 calc(13px * var(--fs)); font-size: calc(13px * var(--fs)); }
 
 /* 服务器状态卡 */
@@ -2248,7 +2248,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 /* 金坛麻将 · 给人的即时反馈
  * 说话（金坛话录音 / 系统 TTS）、牌桌音效、振动、屏幕上那条提示。
  * 凑一块是因为它们回答同一个问题：怎么让人知道刚才发生了什么。
- * 录音那部分是给子女用的 —— 照着念一遍，外婆就能听到乡音。
+ * 录音那部分是给会说金坛话的人用的 —— 照着念一遍，全家就都能听到乡音。
  *
  * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
@@ -2554,7 +2554,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     o.start(t); o.stop(t + dur + 0.02);
   }
   /* ── 屏幕常亮 ──
-     老人一张牌能想半分钟，屏幕自己灭掉最烦人。进牌桌时锁住，离开就放开。
+     一张牌想上半分钟很常见，屏幕自己灭掉最烦人。进牌桌时锁住，离开就放开。
      系统会在切后台时自动释放，所以回前台要重新申请。 */
   var wakeLock = null;
   function keepAwake(on) {
@@ -2724,7 +2724,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   }
   /* 存档里的字段类型一律不信：只要有一个不是预期的类型，
      后面 nick.charAt() 之类就会抛错，整个脚本起不来，
-     外婆看到的是一片空白，而且自己没法恢复。全部强制转成安全值。 */
+     打开就是一片空白，而且自己没法恢复。全部强制转成安全值。 */
   function loadProfile() {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(PROF_KEY) || "null"); } catch (e) {}
@@ -3061,7 +3061,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       '五萬写作「伍」，都跟家里那副牌一样。</p>' +
       '<h3>更新记录</h3>';
     /* 只摊开最近三版。十几条日志占了整页四分之三，
-       老人翻半天翻不到底，更早的收进折叠里，想看再点。 */
+       一路翻到底太累，更早的收进折叠里，想看再点。 */
     var SHOWN = 3;
     for (var i = 0; i < CHANGELOG.length; i++) {
       if (i === SHOWN) {
@@ -3268,11 +3268,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     return h + "</div>";
   }
 
-  /* 录音面板。给会说金坛话的人用的 —— 通常是子女帮着录，不是外婆自己录。 */
+  /* 录音面板。给会说金坛话的人用的 —— 录的人和玩的人不一定是同一个。 */
   function voicePanel() {
     var done = voicePackCount(), total = VOICE_LIST.length;
     var h = '<p class="set-hint">手机自带的语音只有普通话，没有金坛话。' +
-      "想让外婆听到乡音，得找个会说金坛话的人照着下面念一遍 —— " +
+      "想听乡音，得找个会说金坛话的人照着下面念一遍 —— " +
       "点「录」，它录 1.8 秒自动停，录完立刻放给你听，不满意再点一次重录。" +
       "全部录完点「导出」，把文件跟游戏一起传上去，全家的手机就都是金坛话了。</p>";
     h += '<div class="vc-top"><div class="vc-prog">已录 <b>' + done + "</b> / " + total +
@@ -3300,7 +3300,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
          "只录一部分也行，录了的用金坛话，没录的自动用普通话顶上。</p>";
     h += '<p class="set-hint">拿不准发音的话，B 站上「语言狂魔Mark」有一期' +
          "《江苏金坛话入门100句》可以对照着听。另外金坛话分两片 —— " +
-         "东边是吴语、西边是江淮官话，按外婆自己那一片的口音录就对了。</p>";
+         "东边是吴语、西边是江淮官话，按自己那一片的口音录就对了。</p>";
     return h;
   }
 
@@ -3614,7 +3614,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
   /* 探一台服务器通不通。走 /health，不会真的开房间。
      超时必须自己掐：域名被污染时浏览器会一直等到系统 TCP 超时（半分钟往上），
-     那期间界面只会显示「正在进房…」，老人以为是卡死了。 */
+     那期间界面只会显示「正在进房…」，看着像是卡死了。 */
   function probeServer(base) {
     return new Promise(function (resolve) {
       var done = false, ctl = null;
@@ -3882,7 +3882,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
 
     /* 走到这儿说明服务端发了一条这个版本不认识的消息。
        以前是直接掉地上 —— 牌局无声停住，控制台干干净净，没法查。
-       实际最可能的原因是这台手机缓存着旧版本（老人的手机常年不清缓存），
+       实际最可能的原因是这台手机缓存着旧版本（装到桌面之后很少有人清缓存），
        所以顺手提示一句去更新。_测试_协议.mjs 会在提交前拦住真正的协议漂移。 */
     console.warn("收到不认识的消息类型：", m.t, m);
     if (!NET.sawUnknown) {
@@ -4452,7 +4452,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     return h + "</div>";
   }
 
-  /* 连不上的原因和解法。写给装这个游戏的人看，不是给老人看的 */
+  /* 连不上的原因和解法。写给动手排查的人看，不是给等着开局的人看的 */
   function fixHTML() {
     return '<div class="deploy">' +
       "<p><strong>症状</strong>：点「开一个房间」一直转圈，或者等一会儿说连不上。</p>" +
@@ -4801,7 +4801,7 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     onHumanPlay();
   });
 
-  /* 点一张手牌，告诉你这种牌还有几张没露面 —— 老人算牌的小抄 */
+  /* 点一张手牌，告诉你这种牌还有几张没露面 —— 记牌的小抄 */
   function showTileCount(key) {
     var el = document.getElementById("tile-info");
     if (!settings.counter || !luck().assist || !key || !game) {
@@ -5782,8 +5782,11 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
  * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
 
-  var VERSION = "1.19.0";
+  var VERSION = "1.19.1";
   var CHANGELOG = [
+    { v: "1.19.1", d: "2026-09-03", items: [
+      "一些优化"
+    ] },
     { v: "1.19.0", d: "2026-09-02", items: [
       "修好一个会让整桌卡死的问题：轮到你选碰不碰的时候手机掉线，回来以后没人再问你了，四个人一起干等 —— 现在重连会把那张牌重新摆到你面前",
       "联机时收到看不懂的消息不再闷头丢掉，会提醒你这台手机上的版本可能太旧了"

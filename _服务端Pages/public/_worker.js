@@ -13,7 +13,7 @@
 
 /* 由 构建.mjs 从 src/app.js 的 VERSION 同步过来，别手动改。
    /health 会把它报出来，部署完拿手机开一下就知道线上是哪一版。 */
-const VERSION = "1.19.0";
+const VERSION = "1.19.1";
 
 const CODE_CHARS = "ACDEFGHJKLMNPQRSTUVWXY3479";  /* 去掉了容易看错的 0O1IB8Z2S6 */
 function makeCode() {

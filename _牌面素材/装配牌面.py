@@ -2,7 +2,7 @@
 """把 Wikimedia 的公有领域麻将牌面装进 index.html。
 
 原来的牌面是逐笔画出来的（engraved / coin / bamboo / sparrow 那一套），
-外婆说看着不习惯 —— 画得再像也不是实物的画法。
+有人反馈看着不习惯 —— 画得再像也不是实物的画法。
 这个脚本把那一整块换成真牌的矢量图案：
   · 数据来自 jintan-tiles.json（42 张，已经剥掉牌身、归一化到 60x82 视框）
   · 替换 index.html 里从「牌面绘制」注释到 faceBody 结束的整段

@@ -106,7 +106,7 @@
   }
   /* 存档里的字段类型一律不信：只要有一个不是预期的类型，
      后面 nick.charAt() 之类就会抛错，整个脚本起不来，
-     外婆看到的是一片空白，而且自己没法恢复。全部强制转成安全值。 */
+     打开就是一片空白，而且自己没法恢复。全部强制转成安全值。 */
   function loadProfile() {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(PROF_KEY) || "null"); } catch (e) {}

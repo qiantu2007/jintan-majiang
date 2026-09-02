@@ -1,7 +1,7 @@
 {
   "name": "金坛麻将",
   "short_name": "金坛麻将",
-  "description": "常州金坛玩法的单机麻将，不能吃牌，一花起胡。",
+  "description": "常州金坛玩法的麻将，能一个人打，也能和朋友联机。不吃牌，一花起胡。",
   "lang": "zh-CN",
   "start_url": "./index.html",
   "scope": "./",

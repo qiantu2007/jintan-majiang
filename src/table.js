@@ -196,7 +196,7 @@
     onHumanPlay();
   });
 
-  /* 点一张手牌，告诉你这种牌还有几张没露面 —— 老人算牌的小抄 */
+  /* 点一张手牌，告诉你这种牌还有几张没露面 —— 记牌的小抄 */
   function showTileCount(key) {
     var el = document.getElementById("tile-info");
     if (!settings.counter || !luck().assist || !key || !game) {

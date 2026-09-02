@@ -15,7 +15,7 @@ import { makeWall, shuffle, isFlower, canWinShape, countKey } from "../src/rules
 
 /* 由 构建.mjs 从 src/app.js 的 VERSION 同步过来，别手动改。
    /health 会把它报出来，部署完拿手机开一下就知道线上是哪一版。 */
-const VERSION = "1.19.0";
+const VERSION = "1.19.1";
 
 /* 洗牌用 crypto，不是 Math.random —— 服务器自己也猜不到牌序。
    单机那边不需要这个强度，所以随机源是传进去的，不写死在 rules 里。 */
