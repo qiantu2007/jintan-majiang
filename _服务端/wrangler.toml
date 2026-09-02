@@ -1,0 +1,13 @@
+name = "jintan-mahjong"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Durable Object：一个房间号对应一个独立实例，牌墙就存在里面
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+# 免费计划的 Durable Objects 需要用 SQLite 存储后端
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

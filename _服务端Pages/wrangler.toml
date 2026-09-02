@@ -1,0 +1,17 @@
+# 金坛麻将 · 联机入口（Cloudflare Pages）
+#
+# 部署：在这个文件夹里跑  npx wrangler pages deploy
+# 部署完会给一个 https://xxx.pages.dev 的网址，那个就是填进游戏里的地址。
+#
+# ROOM 绑定指向 _服务端 那个 Worker 里的 Room 类：
+# Pages 自己不能定义 Durable Object，只能借用 Worker 的。
+# script_name 必须和 _服务端/wrangler.toml 里的 name 一致。
+
+name = "jintan-mj"
+pages_build_output_dir = "./public"
+compatibility_date = "2026-01-01"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+script_name = "jintan-mahjong"
