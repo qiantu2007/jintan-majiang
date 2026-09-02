@@ -123,20 +123,28 @@ node 构建.mjs --检查
 
 ## 部署
 
-一共三个东西要上传，**顺序不能反**：先服务端（两个文件夹一起），后网页。
-服务端往往兼容老客户端；反过来新网页发的消息老服务端不认识，牌局会卡在那儿。
+### 线上都在哪（以前只记在脑子里，写下来）
 
-### 现状
-
-| 部署到哪 | 是什么 | 状态 |
+| 是什么 | 部署在哪 | 网址 |
 |---|---|---|
-| `jintan-mahjong`（Worker） | 房间逻辑（`Room` 这个 Durable Object） | 已部署 |
-| `jintan-mj.pages.dev`（Pages） | 联机入口，转发给上面那个 Worker | 已部署 |
-| ？（Pages） | **游戏网页本身** | **还没部署过** |
+| **游戏网页** | GitHub Pages，仓库 `qiantu2007/jintan-majiang` | <https://qiantu2007.github.io/jintan-majiang/> |
+| 房间逻辑（Durable Object） | Cloudflare Worker `jintan-mahjong` | 它的 `workers.dev` 网址用不到 |
+| 联机入口 | Cloudflare Pages `jintan-mj` | <https://jintan-mj.pages.dev> |
 
-> 注意 `jintan-mj.pages.dev` 是**联机服务器**，不是游戏。打开它只会看到
-> 一行「金坛麻将联机服务」。游戏网页需要一个**另外的** Pages 项目
-> （项目名不能重复），比如 `jintan-majiang`。
+注意这两件事容易搞混：
+
+- `jintan-mj.pages.dev` 是**联机服务器**，不是游戏。打开它只会看到一行
+  「金坛麻将联机服务」。游戏在上面那个 github.io 地址。
+- 网页和服务器**分别部署、可以是不同版本**，所以才要 `/health` 和
+  `version.json` 各报各的版本号，好对账。
+
+### 顺序：先服务端，后网页
+
+服务端一般兼容老客户端（多发的字段老网页看不懂就忽略）；反过来，
+新网页依赖服务端新发的字段，老服务端不发，功能就是坏的。
+
+> 具体例子：1.19.0 修的「叫牌时掉线」要服务端在 `resume` 里多带一个
+> `claim` 字段。只传网页不传服务端，那个 bug 依然在。
 
 ### 一、服务端（改了 `_服务端/` 或 `_服务端Pages/` 才需要）
 
@@ -157,23 +165,34 @@ cd "_服务端Pages"; npx wrangler pages deploy
 
 ### 二、游戏网页
 
-```bash
-node 构建.mjs; npx wrangler pages deploy "_上传这个文件夹" --project-name jintan-majiang --branch main
+先构建，再把 `_上传这个文件夹` 里的 **8 个文件**传到 GitHub 仓库
+`qiantu2007/jintan-majiang` 的根目录（网页上传，覆盖同名文件）：
+
+```
+index.html   sw.js   version.json   manifest.webmanifest
+icon-192.png   icon-512.png   apple-touch-icon.png   语音包.json
 ```
 
-得到 `https://jintan-majiang.pages.dev`。手机打开它，浏览器菜单里选
-「添加到主屏幕」，之后就是一个能离线打的 App。
+传完 GitHub Pages 一般 1～2 分钟生效。
+
+> 本地仓库目前没有 remote。想省掉手动上传的话，可以把这个仓库和
+> `qiantu2007/jintan-majiang` 接起来，以后 `git push` 就等于发版 ——
+> 但那会改变现在的工作方式，没接之前照上面手动传。
 
 ### 三、验收
 
 | 打开这个 | 应该看到 |
 |---|---|
-| `https://jintan-mj.pages.dev/health` | `ok 1.19.0`（服务端版本） |
-| `https://jintan-majiang.pages.dev/version.json` | `{ "version": "1.19.0" }`（网页版本） |
+| <https://jintan-mj.pages.dev/health> | `ok 1.19.0` ← 服务端版本 |
+| <https://qiantu2007.github.io/jintan-majiang/version.json> | `{ "version": "1.19.0" }` ← 网页版本 |
 | 游戏首页右下角 | `v1.19.0` |
 | 游戏里「和朋友一起打 → 检查网络」 | 打勾 |
 
-两个版本号对上了，才算真的都部署到位。
+**两个版本号都对上了**才算部署到位。只对上一个，说明另一半忘传了。
+
+手机上打开游戏网址，浏览器菜单里选「添加到主屏幕」，之后就是一个
+能离线打的 App。已经装过的不用重装：`sw.js` 的缓存名变了，
+下次打开会自己提示更新。
 
 ---
 
