@@ -3,7 +3,7 @@
    策略：缓存优先 + 后台悄悄更新（stale-while-revalidate）——
    老人永远不会看到白屏或转圈，新版本在下次打开时自动生效。 */
 
-var CACHE = "jintan-mj-v1181";
+var CACHE = "jintan-mj-v1190";
 var ASSETS = [
   "./",
   "./index.html",

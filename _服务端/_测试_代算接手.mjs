@@ -22,9 +22,16 @@ function connect(code, token, name, opts = {}) {
     let m; try { m = JSON.parse(ev.data); } catch { return; }
     if (m.t === "deal" || m.t === "resume") {
       st.dealt = true;
-      if (m.dealer === m.seat && m.hand && m.hand.length % 3 === 2) {
-        setTimeout(() => send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id }), 120);
+      /* 手上 14 / 11 / 8 / 5 张就该自己出牌了，这一刻不会再有 drew 送来：
+         开局庄家如此，断线重连回来轮到自己也如此。只认庄家会漏掉后者。 */
+      if (m.hand && m.hand.length % 3 === 2) {
+        setTimeout(() => {
+          if (m.needFlower) { send(ws, { t: "act", a: "flower" }); return; }
+          send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id });
+        }, 120);
       }
+      /* 重连时还欠一个「碰不碰」的回答，服务端随 resume 带回来 */
+      if (m.claim) setTimeout(() => send(ws, { t: "act", a: "claim", pick: "pass" }), 120);
     }
     if (m.t === "discard") st.discards++;
     if (m.t === "over") st.over = m.kind;
@@ -37,8 +44,13 @@ function connect(code, token, name, opts = {}) {
       setTimeout(() => send(ws, { t: "act", a: "claim", pick: "pass", forSeat: m.seat }), AI_MS);
     }
     if (m.t === "claim") setTimeout(() => send(ws, { t: "act", a: "claim", pick: "pass" }), 60);
+    /* 摸到花要先补 —— 1.18.0 起服务端会停下来等这个动作，
+       闷头出牌服务端不受理，整局冻住，这条测试就会随机变红。 */
     if (m.t === "drew") {
-      setTimeout(() => send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id }), 60);
+      setTimeout(() => {
+        if (m.needFlower) { send(ws, { t: "act", a: "flower" }); return; }
+        send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id });
+      }, 60);
     }
   });
   return st;

@@ -33,10 +33,20 @@ function connect(code, token, name, opts = {}) {
     if (m.t === "deal" || m.t === "resume") {
       st.dealt = true;
       st.hand = m.hand;
-      /* 庄家开局就是 14 张，不会收到 drew，得自己先打一张 */
-      if (m.dealer === m.seat && m.hand && m.hand.length % 3 === 2) {
-        setTimeout(() => send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id }), 120);
+      /* 手上是 14 / 11 / 8 / 5 张就说明该自己出牌了，而这一刻不会再有 drew 送来：
+         开局庄家是这样，断线重连回来轮到自己也是这样。
+         以前这里只认「庄家」，导致非庄家重连后捏着 14 张牌不出，
+         牌局停死，测试就误判成「服务器没把电脑叫醒」—— 时灵时不灵的根源。 */
+      if (m.hand && m.hand.length % 3 === 2) {
+        setTimeout(() => {
+          /* 还欠着一张花的话得先补，补完服务端才让出牌 */
+          if (m.needFlower) { send(ws, { t: "act", a: "flower" }); return; }
+          send(ws, { t: "act", a: "discard", id: m.hand[m.hand.length - 1].id });
+        }, 120);
       }
+      /* 断线时欠着一个「碰不碰」的回答，服务端会随 resume 一起带回来
+         （见 _测试_叫牌时掉线.mjs）。不接住的话牌局就停在等我回答上。 */
+      if (m.claim) setTimeout(() => send(ws, { t: "act", a: "claim", pick: "pass" }), 120);
     }
     if (m.t === "discard") st.discards++;
     if (m.t === "turn") st.lastTurn = m.who;
@@ -56,9 +66,13 @@ function connect(code, token, name, opts = {}) {
     }
     /* 自己被问到吃碰杠：一律过，专心测电脑 */
     if (m.t === "claim") setTimeout(() => send(ws, { t: "act", a: "claim", pick: "pass" }), 60);
-    /* 轮到自己：打最后一张 */
+    /* 轮到自己：打最后一张。
+       摸到的是花就得先补 —— 1.18.0 起服务端会停下来等这个动作，
+       这里照旧闷头出牌的话服务端不受理，整局就冻在这儿了
+       （这正是这条测试以前时灵时不灵的真正原因）。 */
     if (m.t === "drew") {
       setTimeout(() => {
+        if (m.needFlower) { send(ws, { t: "act", a: "flower" }); return; }
         const t = m.hand[m.hand.length - 1];
         send(ws, { t: "act", a: "discard", id: t.id });
       }, 60);
@@ -118,23 +132,30 @@ async function main() {
   const host2 = connect(code, "tok-host", "房主");
   await opened(host2);
 
-  /* 重连后 4 秒内就该恢复：服务器把挂起的电脑请求重发给他 */
-  console.log("  盯着看 4 秒内电脑会不会重新动起来");
-  await sleep(4000);
+  /* 重连后服务器应该把挂起的电脑请求重发给他，牌局接着走。
+     这里改成「盯到动起来为止，最多 15 秒」，而不是固定睡 4 秒 ——
+     四家的出牌节奏本来就有快有慢，卡死一个固定窗口只会让测试随机变红。 */
+  console.log("  盯着看电脑会不会重新动起来（最多 15 秒）");
+  const 截止 = Date.now() + 15000;
+  while (Date.now() < 截止) {
+    if (mate.discards > beforeJoin && host2.aiAsks + host2.aiClaims > 0) break;
+    if (mate.over) break;
+    await sleep(250);
+  }
   const afterJoin = mate.discards;
 
   const stalled = duringOut - before;      /* 房主不在时走了几步 */
   const resumed = afterJoin - beforeJoin;  /* 回来后 4 秒走了几步 */
   console.log("\n──────── 结果 ────────");
   console.log(`房主不在的 5 秒里走了   : ${stalled} 步（只有房主能代算，理应停住）`);
-  console.log(`重连后 4 秒里走了       : ${resumed} 步`);
+  console.log(`重连后走了               : ${resumed} 步`);
   console.log(`重连后收到的电脑请求    : ${host2.aiAsks} 次出牌 / ${host2.aiClaims} 次碰杠`);
   console.log(`牌局                    : ${mate.over || "还在进行"}`);
 
   const ok = resumed > 0 && host2.aiAsks + host2.aiClaims > 0;
   console.log(ok
     ? "✓ 重连后服务器把挂起的请求重发了，电脑立刻接着走"
-    : "✗ 电脑卡住了 —— 重连后 4 秒一步没动，也没收到任何电脑请求");
+    : "✗ 电脑卡住了 —— 重连后 15 秒一步没动，也没收到任何电脑请求");
 
   host2.ws.close(); mate.ws.close();
   process.exit(ok ? 0 : 1);

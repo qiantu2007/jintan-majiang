@@ -2244,404 +2244,13 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
   }
 
 
-  /* ───────── app.js ───────── */
-/* 金坛麻将 · 界面、联机、牌局流程
- * 还没拆开的那一大块：DOM、WebSocket、单机回合循环、存档、设置。
- * 规则/计分/AI/牌面已经搬到同目录的另外四个文件里。
- * 由 拆分.py 从 index.html 抽出。改这里，然后跑 `node 构建.mjs`。 */
-
-
-  var VERSION = "1.18.1";
-  var CHANGELOG = [
-    { v: "1.18.1", d: "2026-09-01", items: [
-      "修好一个会卡死的问题：欠着花掉线、系统替你补掉之后再回来，出牌按钮就再也不出现了",
-      "补花提示语改短，大牌面＋特大字时不会再被手牌区切掉半截"
-    ] },
-    { v: "1.18.0", d: "2026-09-01", items: [
-      "摸到花不再自动换掉了：花牌会留在手里，点一下它（或点「补花」）才亮到花区，然后从牌尾补一张",
-      "连着摸到花就连着补，一张一张来，跟真牌桌上的动作一样",
-      "补花期间不给出牌按钮，免得手快把花当废牌打出去",
-      "电脑和掉线托管的座位仍旧自动补，不会把牌局拖住",
-      "联机同步改了：服务端摸到花会停下来等你点，断线重连回来还欠着的那张花会接着让你补"
-    ] },
-    { v: "1.17.1", d: "2026-09-01", items: [
-      "录音界面加了发音参考：B 站有一期《江苏金坛话入门100句》可以对照着听",
-      "标明金坛话分两片 —— 东边吴语、西边江淮官话，按自家那片口音录就行"
-    ] },
-    { v: "1.17.0", d: "2026-09-01", items: [
-      "语音播报分三档：关 / 只报碰杠胡 / 每张打出的牌都报",
-      "可以录金坛话了：设置里有 40 条词，找会说的人照着念一遍，录完全家都能用",
-      "录音会自动剪掉前后空白、拉齐音量，一条约 7 KB，40 条加起来才 300 KB",
-      "统一转成 WAV，苹果安卓都放得响；录了哪条用哪条，没录的自动用普通话顶上",
-      "「一键调舒服」现在会把播报调成「每张牌都报」"
-    ] },
-    { v: "1.16.0", d: "2026-09-01", items: [
-      "房主复制完链接、切去微信发给朋友，回来房间还在了（以前会说「房间不存在」）",
-      "掉线的人回来还是原来的座位，房主身份、准备状态都不会丢",
-      "有人手机锁屏掉线，不再把房主卡在「还有 1 人没准备」上，可以先开局",
-      "掉线的人中途回来能接着打；一直不回来的，轮到他时电脑会替他走，牌局不会停",
-      "修掉了会反复断线重连、连准备都点不了的问题"
-    ] },
-    { v: "1.15.1", d: "2026-09-01", items: [
-      "修好联机时中途退出再进来、电脑就不动了的问题",
-      "退出的人如果正好是替电脑算牌的那个，屋里别人会立刻接手，牌局不会停",
-      "万一人全退光了，服务器自己替电脑走一步，牌局不会永远卡死",
-      "（这次改的是服务器，游戏文件也要一起传）"
-    ] },
-    { v: "1.15.0", d: "2026-09-01", items: [
-      "牌面全部换成实物麻将的画法，不再是自己描的",
-      "筒子是铜钱花瓣纹，萬字数字是靛蓝色，五萬写作「伍」——和家里那副牌一样",
-      "一条的雀、条子的红绿搭配、春夏秋冬梅蘭竹菊，都按实物来",
-      "牌面反而更省资源了：屏幕上的元素少了一成，牌河重排快了一倍"
-    ] },
-    { v: "1.14.1", d: "2026-09-01", items: [
-      "修好联机时牌河会凭空多出一张牌的问题（断线重连后同一条消息会收两遍）",
-      "重复消息现在一律当没收到，一副牌稳稳是 144 张",
-      "服务端同一个座位只保留一条连接，从根上不再发两遍"
-    ] },
-    { v: "1.14.0", d: "2026-09-01", items: [
-      "设置页顶上加了「一键调舒服」：字和牌放最大、出牌放慢、开语音，点一下全搞定",
-      "新增备份存档：身家和战绩能导出成一串码，存到微信收藏里，换手机或清了缓存都能贴回来",
-      "修好一个明显的错：游戏 ID 每次打开都在变，报给牌友的号第二天就对不上，现在真的固定不变了",
-      "修好一个隐患：存档里只要有一个字段类型不对，整个游戏会打不开，现在会自动纠正",
-      "修好另一个隐患：设置值损坏时会让能胡的牌被误判成「无番」",
-      "设置和联机两页也统一了版式，和其他页面一样宽、一样的标题样式"
-    ] },
-    { v: "1.13.0", d: "2026-09-01", items: [
-      "修好一个大问题：设置页之前是全白的，打不开，现在正常了",
-      "所有页面改成铺满屏幕，以前内容挤在中间窄窄一条，两边全空着",
-      "设置按「看得清楚 / 打得舒服 / 打得过瘾」分了组，字号和牌面大小提到最前面",
-      "「我的」改成一进来先看到身家和称号，称号一览和个人资料收起来了",
-      "点左上角头像还是直接进资料，会自动展开",
-      "帮助里的更新记录只留最近三版，更早的点开再看",
-      "结算面板的按钮不再压住底下的字",
-      "小按钮加大到一戳就中，个人资料那行小字也调大了"
-    ] },
-    { v: "1.12.0", d: "2026-09-01", items: [
-      "画面流畅了很多：一次重绘从 8 毫秒降到 0.04 毫秒，老手机点哪都跟手",
-      "牌面改成共用一份图样，屏幕上的元素少了一半，更省电",
-      "联机换到国内直连能通的地址，不用挂梯子也能进房间了",
-      "连不上时 6 秒就说清楚，不再干等半分钟",
-      "服务器可以配多个，一个不通自动换另一个，连通过的会记住",
-      "新增「检查网络」，一眼看出是没网、服务器挂了、还是网址被拦",
-      "「和朋友一起打」里加了「连不上怎么办」，写明原因和解决办法",
-      "修掉一个联机的坑：离线缓存会把开房请求也存下来，导致每次开房拿到同一个房间号",
-      "断线重连更快，从后台切回来立刻重连",
-      "牌桌加了聚光和收边，牌做出了厚度，出牌带一点自然的偏转"
-    ] },
-    { v: "1.11.0", d: "2026-09-01", items: [
-      "首页只留一个「开始游戏」，点进去再选怎么打",
-      "上次没打完的那盘，会显示在最上面，还标着打到第几盘、剩多少张",
-      "「自己一个人打」和「和朋友一起打」并排放，不用再找",
-      "小屏幕、大字号下三个选项也能一眼看全"
-    ] },
-    { v: "1.10.0", d: "2026-09-01", items: [
-      "有个人资料了：游戏 ID、昵称、年龄、性别",
-      "主页左上角显示头像和资料，点一下就能改",
-      "游戏 ID 自动生成、终身不变，可以复制给朋友",
-      "联机进房间时，别人看到的就是你的昵称"
-    ] },
-    { v: "1.9.1", d: "2026-09-01", items: [
-      "服务器地址已经内置好，装上就能联机，不用再一台台手填",
-      "「和朋友一起打」里能看到当前用的服务器，有「复制网址」按钮",
-      "同一页里加了自己搭服务器的教程，命令都能一键复制",
-      "想用自己的服务器就点「改成别的」，随时能改回默认"
-    ] },
-    { v: "1.9.0", d: "2026-08-31", items: [
-      "能和朋友一起打了：开房间拿房间号，或者直接发邀请链接",
-      "最多四个人，空位自动用电脑补上",
-      "所有人都点了「准备好了」，房主才能开始",
-      "房主可以选电脑难度，也可以把人请出去",
-      "牌是服务器发的，每人只收到自己的牌，房主也看不到别人的",
-      "掉线会自动重连，回来还是原来的座位和手牌"
-    ] },
-    { v: "1.8.0", d: "2026-08-31", items: [
-      "修好一个大 bug：以前只要自己刚打过牌，别人打出的牌就一张都胡不了，点炮胡几乎发生不了",
-      "现在上家打出的牌正好补上你的顺子并能和牌时，可以直接胡（等于吃下来就胡）",
-      "「不能胡自己打过的牌」改成只拦自己打出去的那几张，不再一出牌就锁死全部",
-      "「过水不胡」改成真的放弃过一次可胡的牌之后才锁"
-    ] },
-    { v: "1.7.1", d: "2026-08-31", items: [
-      "去掉了屏幕最下方那块发黑的区域，手牌区改成牌桌的深绿，整屏是一张完整的桌子",
-      "手牌区压薄了一点，牌桌看得更多",
-      "修好了 iPhone 横屏刘海挡住时手牌被挤成两行的问题"
-    ] },
-    { v: "1.7.0", d: "2026-08-31", items: [
-      "首页加了「我的」：身家、称号、战绩、历史牌局都在里面",
-      "可以复盘：点历史里的任意一盘，能看到当时四家的牌和算分明细",
-      "称号从 7 个加到 11 个，多了新丁、名家、大师、宗师",
-      "称号之间的身家差距拉大了，越往上越难爬（开局仍是「熟手」，不会降级）",
-      "「我的」里能看到完整的称号阶梯和各自门槛"
-    ] },
-    { v: "1.6.0", d: "2026-08-31", items: [
-      "打牌时屏幕保持常亮，不会想一想就黑屏",
-      "加了「提示」按钮，不知道打哪张时点一下，会指出该打的牌并说明理由",
-      "双击一张牌可以直接打出，不用再点「打出」",
-      "碰 / 杠 / 胡 的按钮改到手牌正上方居中，更大更好按，也不再挤动画面",
-      "加了「牌面大小」，选「大」牌会放大约四分之一、手牌排成两行",
-      "碰杠胡时手机会轻轻震一下（安卓）",
-      "牌桌中间会写明轮到谁出牌"
-    ] },
-    { v: "1.5.0", d: "2026-08-31", items: [
-      "难度拆成「牌运」和「对手水平」两个独立档位",
-      "牌运分轻松 / 公平 / 硬核，硬核档关掉记牌和听牌提示，得自己记",
-      "对手分瞎打 / 新手 / 普通 / 高手，高手会记牌、算进张、挑安全牌打",
-      "结算时摊出四家牌型，没胡的显示还差几张听牌",
-      "出牌倒计时从 2 档加到 6 档",
-      "首页加了版本号和帮助，有新版本会提示更新"
-    ] },
-    { v: "1.4.0", d: "2026-08-30", items: [
-      "可以添加到主屏幕，像 App 一样用",
-      "加了离线缓存，装好之后断网也能打"
-    ] },
-    { v: "1.3.0", d: "2026-08-30", items: [
-      "加了身家，开局 2000，输赢跨天累计",
-      "身家可以打成负数，不会破产出局",
-      "按身家给称号，从学徒一路到牌王",
-      "结算面板顶部显示身家变化和升降段"
-    ] },
-    { v: "1.2.0", d: "2026-08-29", items: [
-      "牌面照实物重画：同心筒子、真竹节条子、一条画雀",
-      "加了牌桌音效，碰杠胡都有声",
-      "点一张手牌会告诉你这种牌还剩几张",
-      "难度和出牌速度档位细分"
-    ] },
-    { v: "1.1.0", d: "2026-08-29", items: [
-      "改成横屏牌桌，手牌一行排完",
-      "竖屏拿手机时画面自动转过来",
-      "四家牌河分开摆，结算明细分两栏"
-    ] },
-    { v: "1.0.0", d: "2026-08-29", items: [
-      "第一版：金坛玩法、不能吃牌、一花起胡、算分明细"
-    ] }
-  ];
-
-  var SAVE_KEY = "jintan_mj_v1";
-  var SET_KEY = "jintan_mj_set_v1";
-  var NAMES = ["你", "下家", "对家", "上家"];
-
-  /* 出牌速度 5 档（毫秒） */
-  var SPEED = { vslow: 3500, slow: 2500, mid: 1800, fast: 1100, vfast: 600 };
-
-  /* 对手水平 4 档
-     sloppy = 走神概率（随机乱打、漏碰漏杠）
-     defend = 防守权重（照牌河挑安全牌打）
-     master = 走完整的向听 + 进张概率计算 */
-  var DIFF = {
-    wild:   { sloppy: 0.92, defend: 0,   master: false },  /* 不会玩，基本瞎打 */
-    rookie: { sloppy: 0.45, defend: 0,   master: false },  /* 会打，常出错 */
-    normal: { sloppy: 0.12, defend: 0.5, master: false },  /* 偶尔失误 */
-    master: { sloppy: 0,    defend: 1,   master: true  }   /* 记牌算概率 */
-  };
-  var DIFF_ALIAS = { easy: "rookie", hard: "master" };     /* 旧存档的值 */
-  function diff() {
-    var k = DIFF_ALIAS[settings.difficulty] || settings.difficulty;
-    return DIFF[k] || DIFF.rookie;
-  }
-
-  /* 牌运 3 档：只影响发到你手上的牌，不影响电脑，也不影响算分
-     kind = 起手和摸牌都朝你倾斜；fair / hard = 完全随机洗牌
-     hard 额外关掉记牌提示和听牌提示，逼你自己记 */
-  var LUCK = {
-    kind: { bias: true,  assist: true  },
-    fair: { bias: false, assist: true  },
-    hard: { bias: false, assist: false }
-  };
-  function luck() { return LUCK[settings.luck] || LUCK.fair; }
-
-  var settings = {
-    base: 10, flowerScore: 5, cap: 100,
-    difficulty: "easy", speed: "mid", font: "normal",
-    voice: "act", timer: 0, sound: true, counter: true,
-    luck: "fair", vibrate: true, awake: true, tsize: "std",
-    server: ""
-  };
-  var game = null;
-  var ui = {
-    screen: "home", prevScreen: "home", selected: null,
-    paused: false, claimWait: null, discardWait: null, gangPickWait: null,
-    flowerWait: null, flowerId: null,
-    mineOpen: { ladder: false, prof: false },   /* 「我的」里两块折叠区 */
-    mineFocus: null,                            /* 进来后要自动展开并滚过去的那块 */
-    setOpen: { adv: false, voice: false, bk: false, srv: false }   /* 设置里几块折叠区 */
-  };
-  var gen = 0;
-  var uid = 1;
-  var voiceUnlocked = false;
-  var timerId = null;
-  var timerLeft = 0;
-
-  /* 把两个纯模块接到本模块的状态上。
-     score.js 拿的是 settings 本体的引用，设置里改了封顶/底分立刻生效；
-     ai.js 要的三个函数都得看牌局现状，所以留在这里，用注入的方式给它。 */
-  setScoreOpts(settings);
-  setAiView({
-    knownCount: function (k) { return knownCount(k); },
-    safeScore:  function (k) { return safeScore(k); },
-    diff:       function ()  { return diff(); }
-  });
-
-  function nextTileId() { return uid++; }
-
-  function clone(o) { return JSON.parse(JSON.stringify(o)); }
-
-
-
-
-  function selfDrawInfo(p) {
-    return checkHu(p, p.lastDrawn || null, {
-      selfDraw: true,
-      kongDraw: game && game.kongDraw,
-      addWin: false
-    });
-  }
-
-
-
-  function emptyPlayer(i, score) {
-    return {
-      name: NAMES[i], hand: [], melds: [], flowers: [], discards: [],
-      score: score || 0, guoShui: false, passed: [], lastDrawn: null
-    };
-  }
-
-  function newGameState(keepScores) {
-    var scores = [0, 0, 0, 0];
-    var dealer = 0;
-    var round = 1;
-    if (keepScores && game) {
-      for (var i = 0; i < 4; i++) scores[i] = game.players[i].score;
-      dealer = game.nextDealer;
-      round = game.round + 1;
-    }
-    return {
-      wall: shuffle(makeWall(nextTileId)),
-      players: [emptyPlayer(0, scores[0]), emptyPlayer(1, scores[1]), emptyPlayer(2, scores[2]), emptyPlayer(3, scores[3])],
-      dealer: dealer,
-      nextDealer: dealer,
-      current: dealer,
-      round: round,
-      phase: "play",
-      lastDiscard: null,
-      lastFrom: null,
-      kongDraw: false,
-      needDraw: false,
-      drewThisTurn: true,
-      undo: null,
-      over: false,
-      settle: null
-    };
-  }
-
-  function dealTiles() {
-    var d = game.dealer;
-    for (var r = 0; r < 13; r++) {
-      for (var i = 0; i < 4; i++) {
-        var pi = (d + i) % 4;
-        game.players[pi].hand.push(game.wall.shift());
-      }
-    }
-    game.players[d].hand.push(game.wall.shift());
-    biasStartingHand();
-    for (var j = 0; j < 4; j++) {
-      sortHand(game.players[j]);
-      var h = game.players[j].hand;
-      if (h.length) game.players[j].lastDrawn = h[h.length - 1].key;
-    }
-  }
-
-  function sortHand(p) {
-    p.hand.sort(function (a, b) { return cmpKey(a.key, b.key) || a.id - b.id; });
-  }
-
-  function drawFront() { return game.wall.length ? game.wall.shift() : null; }
-  function drawBack() { return game.wall.length ? game.wall.pop() : null; }
-
-  /* ── 牌运倾斜（只在「轻松」档、只对玩家生效）──
-     手法是和牌墙里的牌「交换」，牌张总数和牌墙长度都不变，
-     不会凭空造牌，也不会出现第五张同样的牌。 */
-  function numKeysOf(p) {
-    var a = [];
-    for (var i = 0; i < p.hand.length; i++) if (!isFlower(p.hand[i].key)) a.push(p.hand[i].key);
-    return a;
-  }
-
-  function biasStartingHand() {
-    if (!luck().bias || !game) return;
-    var p = game.players[0];
-    for (var pass = 0; pass < 3; pass++) {
-      var keys = numKeysOf(p);
-      if (!keys.length) return;
-      var cur = shantenOf(counts34(keys), 0);
-      if (cur <= 1) return;                    /* 已经够好了，别喂过头 */
-      /* 找手里最没用的一张 */
-      var worstIx = -1, worstV = -1;
-      for (var i = 0; i < p.hand.length; i++) {
-        if (isFlower(p.hand[i].key)) continue;
-        var v = isolateScore(p.hand[i].key, keys);
-        if (v > worstV) { worstV = v; worstIx = i; }
-      }
-      if (worstIx < 0) return;
-      var look = Math.min(12, game.wall.length);
-      var bestW = -1, bestS = cur;
-      for (var w = 0; w < look; w++) {
-        var wk = game.wall[w].key;
-        if (isFlower(wk)) continue;
-        var trial = keys.slice();
-        var ix = trial.indexOf(p.hand[worstIx].key);
-        if (ix < 0) continue;
-        trial[ix] = wk;
-        var s = shantenOf(counts34(trial), 0);
-        if (s < bestS) { bestS = s; bestW = w; }
-      }
-      if (bestW < 0) return;                   /* 换不动了就收手 */
-      var tmp = p.hand[worstIx];
-      p.hand[worstIx] = game.wall[bestW];
-      game.wall[bestW] = tmp;
-      sortHand(p);
-    }
-  }
-
-  /* 玩家摸牌时，从牌墙最前面 3 张里挑一张最有用的换到最前 */
-  function drawFrontFor(pi) {
-    if (pi === 0 && luck().bias && game.wall.length > 1) {
-      var p = game.players[0];
-      var keys = numKeysOf(p);
-      var look = Math.min(3, game.wall.length);
-      var bestI = 0, bestS = 99;
-      for (var i = 0; i < look; i++) {
-        var k = game.wall[i].key;
-        if (isFlower(k)) { bestI = i; break; }   /* 花牌白拿一花，也算好事 */
-        var s = shantenOf(counts34(keys.concat([k])), p.melds.length);
-        if (s < bestS) { bestS = s; bestI = i; }
-      }
-      if (bestI > 0) {
-        var t = game.wall[0];
-        game.wall[0] = game.wall[bestI];
-        game.wall[bestI] = t;
-      }
-    }
-    return drawFront();
-  }
-
-  function still(g) { return g === gen && game && !game.over; }
-
-  function sleep(ms) {
-    return new Promise(function (resolve) {
-      var remain = ms, last = Date.now();
-      function tick() {
-        if (gen && game && game._abort) { resolve("abort"); return; }
-        var now = Date.now();
-        if (!ui.paused) remain -= (now - last);
-        last = now;
-        if (remain <= 0) resolve("ok");
-        else setTimeout(tick, Math.min(50, remain));
-      }
-      tick();
-    });
-  }
-
-  function aiDelay() { return sleep(SPEED[settings.speed] || 1500); }
+  /* ───────── feedback.js ───────── */
+/* 金坛麻将 · 给人的即时反馈
+ * 说话（金坛话录音 / 系统 TTS）、牌桌音效、振动、屏幕上那条提示。
+ * 凑一块是因为它们回答同一个问题：怎么让人知道刚才发生了什么。
+ * 录音那部分是给子女用的 —— 照着念一遍，外婆就能听到乡音。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
   /* ══════════ 语音播报 ══════════
      系统自带的中文语音只有普通话、粤语、台湾腔 —— 没有金坛话，
@@ -2909,6 +2518,110 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     } catch (e) {}
   }
 
+  /* ── 牌桌音效：Web Audio 现场合成，不带任何音频文件 ── */
+  var actx = null;
+  function audio() {
+    if (actx === null) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { actx = false; }
+    }
+    if (actx && actx.state === "suspended") { try { actx.resume(); } catch (e) {} }
+    return actx || null;
+  }
+  /* 一声「嗒」：短噪声过带通，像牌磕在桌面上 */
+  function clack(gain, freq, dur) {
+    var a = audio(); if (!a) return;
+    var n = Math.floor(a.sampleRate * dur);
+    var buf = a.createBuffer(1, n, a.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2);
+    var src = a.createBufferSource(); src.buffer = buf;
+    var bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = 1.4;
+    var g = a.createGain(); g.gain.value = gain;
+    src.connect(bp); bp.connect(g); g.connect(a.destination);
+    src.start();
+  }
+  /* 一个音符，用于胡牌的上行琶音 */
+  function tone(freq, at, dur, gain) {
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = "triangle"; o.frequency.value = freq;
+    var t = a.currentTime + at;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  /* ── 屏幕常亮 ──
+     老人一张牌能想半分钟，屏幕自己灭掉最烦人。进牌桌时锁住，离开就放开。
+     系统会在切后台时自动释放，所以回前台要重新申请。 */
+  var wakeLock = null;
+  function keepAwake(on) {
+    try {
+      if (!("wakeLock" in navigator)) return;
+      if (on) {
+        if (wakeLock) return;
+        navigator.wakeLock.request("screen").then(function (l) {
+          wakeLock = l;
+          l.addEventListener("release", function () { wakeLock = null; });
+        }).catch(function () { wakeLock = null; });
+      } else if (wakeLock) {
+        wakeLock.release().catch(function () {});
+        wakeLock = null;
+      }
+    } catch (e) { wakeLock = null; }
+  }
+
+  /* ── 震动 ──（安卓有效，iOS 的浏览器不支持，静默跳过） */
+  function buzz(pattern) {
+    if (!settings.vibrate || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (e) {}
+  }
+
+  var BUZZ = {
+    discard: 12, draw: 0, flower: [0, 18, 60, 18],
+    peng: [0, 26, 55, 26], gang: [0, 26, 50, 26, 50, 40],
+    turn: [0, 20, 90, 20], hu: [0, 55, 60, 55, 60, 130], lose: [0, 90]
+  };
+
+  function sfx(kind) {
+    if (BUZZ[kind]) buzz(BUZZ[kind]);
+    if (!settings.sound) return;
+    try {
+      if (kind === "draw") clack(0.16, 1500, 0.045);
+      else if (kind === "discard") clack(0.34, 1000, 0.075);
+      else if (kind === "peng") { clack(0.4, 780, 0.08); setTimeout(function () { clack(0.34, 620, 0.09); }, 75); }
+      else if (kind === "gang") { clack(0.42, 700, 0.09); setTimeout(function () { clack(0.4, 560, 0.09); }, 70);
+                                  setTimeout(function () { clack(0.36, 450, 0.11); }, 145); }
+      else if (kind === "flower") clack(0.2, 2100, 0.05);
+      else if (kind === "turn") { tone(660, 0, 0.14, 0.1); tone(880, 0.1, 0.18, 0.09); }
+      else if (kind === "hu") { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * 0.1, 0.34, 0.13); }); }
+      else if (kind === "lose") { tone(392, 0, 0.22, 0.1); tone(294, 0.14, 0.3, 0.09); }
+    } catch (e) {}
+  }
+
+  function toast(text, ms) {
+    var el = document.getElementById("toast");
+    el.textContent = text;
+    el.classList.add("on");
+    setTimeout(function () { el.classList.remove("on"); }, ms || 1600);
+  }
+
+  function setMsg(t, hot) {
+    var el = document.getElementById("msg");
+    el.textContent = t || "";
+    el.classList.toggle("hot", !!hot);
+  }
+
+
+  /* ───────── store.js ───────── */
+/* 金坛麻将 · 存在这台手机上的东西
+ * 身家与称号、个人资料、牌谱、设置、牌局存档、导出备份码。
+ * 全部走 localStorage。都包了 try/catch —— 隐私模式下写不进去也不能崩。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
+
   /* ══════════ 身家 ══════════
      跨会话保存的赌资。开局 2000，可以打成负数（欠账），不会破产出局。
      只记玩家自己，三个电脑对手仍然用本局累计分。 */
@@ -3142,102 +2855,6 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     el.classList.toggle("neg", wealth.w < 0);
   }
 
-  /* ── 牌桌音效：Web Audio 现场合成，不带任何音频文件 ── */
-  var actx = null;
-  function audio() {
-    if (actx === null) {
-      try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
-      catch (e) { actx = false; }
-    }
-    if (actx && actx.state === "suspended") { try { actx.resume(); } catch (e) {} }
-    return actx || null;
-  }
-  /* 一声「嗒」：短噪声过带通，像牌磕在桌面上 */
-  function clack(gain, freq, dur) {
-    var a = audio(); if (!a) return;
-    var n = Math.floor(a.sampleRate * dur);
-    var buf = a.createBuffer(1, n, a.sampleRate);
-    var d = buf.getChannelData(0);
-    for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2);
-    var src = a.createBufferSource(); src.buffer = buf;
-    var bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = freq; bp.Q.value = 1.4;
-    var g = a.createGain(); g.gain.value = gain;
-    src.connect(bp); bp.connect(g); g.connect(a.destination);
-    src.start();
-  }
-  /* 一个音符，用于胡牌的上行琶音 */
-  function tone(freq, at, dur, gain) {
-    var a = audio(); if (!a) return;
-    var o = a.createOscillator(), g = a.createGain();
-    o.type = "triangle"; o.frequency.value = freq;
-    var t = a.currentTime + at;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(gain, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(a.destination);
-    o.start(t); o.stop(t + dur + 0.02);
-  }
-  /* ── 屏幕常亮 ──
-     老人一张牌能想半分钟，屏幕自己灭掉最烦人。进牌桌时锁住，离开就放开。
-     系统会在切后台时自动释放，所以回前台要重新申请。 */
-  var wakeLock = null;
-  function keepAwake(on) {
-    try {
-      if (!("wakeLock" in navigator)) return;
-      if (on) {
-        if (wakeLock) return;
-        navigator.wakeLock.request("screen").then(function (l) {
-          wakeLock = l;
-          l.addEventListener("release", function () { wakeLock = null; });
-        }).catch(function () { wakeLock = null; });
-      } else if (wakeLock) {
-        wakeLock.release().catch(function () {});
-        wakeLock = null;
-      }
-    } catch (e) { wakeLock = null; }
-  }
-
-  /* ── 震动 ──（安卓有效，iOS 的浏览器不支持，静默跳过） */
-  function buzz(pattern) {
-    if (!settings.vibrate || !navigator.vibrate) return;
-    try { navigator.vibrate(pattern); } catch (e) {}
-  }
-
-  var BUZZ = {
-    discard: 12, draw: 0, flower: [0, 18, 60, 18],
-    peng: [0, 26, 55, 26], gang: [0, 26, 50, 26, 50, 40],
-    turn: [0, 20, 90, 20], hu: [0, 55, 60, 55, 60, 130], lose: [0, 90]
-  };
-
-  function sfx(kind) {
-    if (BUZZ[kind]) buzz(BUZZ[kind]);
-    if (!settings.sound) return;
-    try {
-      if (kind === "draw") clack(0.16, 1500, 0.045);
-      else if (kind === "discard") clack(0.34, 1000, 0.075);
-      else if (kind === "peng") { clack(0.4, 780, 0.08); setTimeout(function () { clack(0.34, 620, 0.09); }, 75); }
-      else if (kind === "gang") { clack(0.42, 700, 0.09); setTimeout(function () { clack(0.4, 560, 0.09); }, 70);
-                                  setTimeout(function () { clack(0.36, 450, 0.11); }, 145); }
-      else if (kind === "flower") clack(0.2, 2100, 0.05);
-      else if (kind === "turn") { tone(660, 0, 0.14, 0.1); tone(880, 0.1, 0.18, 0.09); }
-      else if (kind === "hu") { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * 0.1, 0.34, 0.13); }); }
-      else if (kind === "lose") { tone(392, 0, 0.22, 0.1); tone(294, 0.14, 0.3, 0.09); }
-    } catch (e) {}
-  }
-
-  function toast(text, ms) {
-    var el = document.getElementById("toast");
-    el.textContent = text;
-    el.classList.add("on");
-    setTimeout(function () { el.classList.remove("on"); }, ms || 1600);
-  }
-
-  function setMsg(t, hot) {
-    var el = document.getElementById("msg");
-    el.textContent = t || "";
-    el.classList.toggle("hot", !!hot);
-  }
-
   /* —— 存档 —— */
   function saveSettings() {
     try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {}
@@ -3357,6 +2974,14 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     var d = loadGame();
     return !!(d && d.game && !d.game.over && d.game.wall);
   }
+
+
+  /* ───────── pages.js ───────── */
+/* 金坛麻将 · 牌桌以外的界面
+ * 首页、我的（身家 / 称号阶梯 / 战绩 / 复盘）、设置页、录音面板、关于页。
+ * 牌桌本身在 table.js。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
   /* —— 界面 —— */
   function showScreen(name) {
@@ -3643,6 +3268,286 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     return h + "</div>";
   }
 
+  /* 录音面板。给会说金坛话的人用的 —— 通常是子女帮着录，不是外婆自己录。 */
+  function voicePanel() {
+    var done = voicePackCount(), total = VOICE_LIST.length;
+    var h = '<p class="set-hint">手机自带的语音只有普通话，没有金坛话。' +
+      "想让外婆听到乡音，得找个会说金坛话的人照着下面念一遍 —— " +
+      "点「录」，它录 1.8 秒自动停，录完立刻放给你听，不满意再点一次重录。" +
+      "全部录完点「导出」，把文件跟游戏一起传上去，全家的手机就都是金坛话了。</p>";
+    h += '<div class="vc-top"><div class="vc-prog">已录 <b>' + done + "</b> / " + total +
+         (done ? "　约 " + voicePackSize() + " KB" : "") + "</div>";
+    h += '<div class="bk-btns">' +
+         '<button type="button" class="icon-btn" id="vc-export"' + (done ? "" : " disabled") + '>导出语音包</button>' +
+         '<button type="button" class="icon-btn" id="vc-import">导入</button>' +
+         (done ? '<button type="button" class="icon-btn danger" id="vc-clear">全部清掉</button>' : "") +
+         "</div></div>";
+    h += '<div class="vc-list">';
+    for (var i = 0; i < VOICE_LIST.length; i++) {
+      var it = VOICE_LIST[i];
+      var got = hasClip(it.id);
+      var rec = REC.on && REC.id === it.id;
+      h += '<div class="vc-row' + (got ? " got" : "") + (rec ? " rec" : "") + '">' +
+           '<span class="vc-t">' + esc(it.text) + "</span>" +
+           '<span class="vc-mark">' + (got ? "✓" : "") + "</span>" +
+           '<button type="button" class="icon-btn tiny" data-rec="' + it.id + '"' +
+           (REC.on && !rec ? " disabled" : "") + '>' + (rec ? "录音中…" : (got ? "重录" : "录")) + "</button>" +
+           (got ? '<button type="button" class="icon-btn tiny" data-play="' + it.id + '">听</button>' : "") +
+           "</div>";
+    }
+    h += "</div>";
+    h += '<p class="set-hint">念的时候手机离嘴 20 公分左右，安静一点的房间效果最好。' +
+         "只录一部分也行，录了的用金坛话，没录的自动用普通话顶上。</p>";
+    h += '<p class="set-hint">拿不准发音的话，B 站上「语言狂魔Mark」有一期' +
+         "《江苏金坛话入门100句》可以对照着听。另外金坛话分两片 —— " +
+         "东边是吴语、西边是江淮官话，按外婆自己那一片的口音录就对了。</p>";
+    return h;
+  }
+
+  function renderSettings() {
+    var s = settings;
+    /* 顺序按「多久用一次」排：眼睛看不清是第一位要解决的，
+       所以字号和牌面放最前；算分参数和服务器地址设一次就不动，收到最后。 */
+    document.getElementById("set-body").innerHTML =
+
+      /* 帮不熟悉设置的人一步到位：眼睛不好、手慢的，点这一个就够 */
+      '<div class="easy-card">' +
+      '<div class="ez-t">看不清？手忙不过来？</div>' +
+      '<div class="ez-s">点一下，字和牌都放到最大，出牌放慢，还会念出来</div>' +
+      '<button type="button" class="big-btn" id="easy-mode">一键调舒服</button></div>' +
+
+      "<h3>看得清楚</h3>" +
+      rowSeg("字体大小", "font", [["normal", "正常"], ["large", "大"], ["xlarge", "特大"]]) +
+      rowSeg("牌面大小", "tsize", [["std", "标准"], ["big", "大（两行）"]]) +
+
+      "<h3>打得舒服</h3>" +
+      rowSeg("出牌速度", "speed",
+        [["vslow", "很慢 3.5秒"], ["slow", "慢 2.5秒"], ["mid", "适中 1.8秒"],
+         ["fast", "快 1.1秒"], ["vfast", "很快 0.6秒"]]) +
+      rowSeg("出牌倒计时", "timer",
+        [["0", "不限时"], ["120", "2分钟"], ["90", "90秒"], ["60", "60秒"],
+         ["45", "45秒"], ["30", "30秒"]]) +
+      rowSeg("语音播报", "voice",
+        [["off", "关"], ["act", "只报碰杠胡"], ["all", "每张牌都报"]]) +
+      '<p class="set-hint">' + (voicePackCount()
+        ? "现在用的是录好的金坛话（" + voicePackCount() + " 条）。"
+        : "现在是手机自带的普通话。想听金坛话，展开下面「金坛话语音」录一遍。") + "</p>" +
+      rowSeg("牌桌音效", "sound", [["1", "开"], ["0", "关"]]) +
+      rowSeg("震动反馈", "vibrate", [["1", "开"], ["0", "关"]]) +
+      rowSeg("打牌时屏幕常亮", "awake", [["1", "开"], ["0", "关"]]) +
+      rowSeg("剩余张数提示", "counter", [["1", "开"], ["0", "关"]]) +
+      (luck().assist ? "" : '<p class="set-hint warn">硬核档下记牌和听牌提示一律关闭，要靠自己记。</p>') +
+
+      "<h3>打得过瘾</h3>" +
+      rowSeg("牌运", "luck", [["kind", "轻松"], ["fair", "公平"], ["hard", "硬核"]]) +
+      '<p class="set-hint">' + LUCK_HINT[settings.luck || "fair"] + "</p>" +
+      rowSeg("对手水平", "difficulty",
+        [["wild", "瞎打"], ["rookie", "新手"], ["normal", "普通"], ["master", "高手"]]) +
+      '<p class="set-hint">' + DIFF_HINT[settings.difficulty || "rookie"] + "</p>" +
+
+      '<h3 class="fold' + (ui.setOpen.adv ? " open" : "") + '" id="set-adv-fold">' +
+      "算分和身家<span class=\"fold-i\">▾</span></h3>" +
+      (ui.setOpen.adv
+        ? rowNum("底数", "base", s.base) +
+          rowNum("花分值", "flowerScore", s.flowerScore) +
+          rowNum("封顶", "cap", s.cap) +
+          '<p class="set-hint">默认封顶 =（底数 + 3 × 花分值）× 4 = ' + capDefault(s.base, s.flowerScore) +
+          '　<button type="button" class="icon-btn" id="cap-reset" style="min-width:auto;min-height:36px;padding:0 12px">按公式重算</button></p>' +
+          wealthPanel()
+        : "") +
+
+      '<h3 class="fold' + (ui.setOpen.voice ? " open" : "") + '" id="set-voice-fold">' +
+      "金坛话语音" + (voicePackCount() ? "（已录 " + voicePackCount() + " 条）" : "") +
+      "<span class=\"fold-i\">▾</span></h3>" +
+      (ui.setOpen.voice ? voicePanel() : "") +
+
+      '<h3 class="fold' + (ui.setOpen.bk ? " open" : "") + '" id="set-bk-fold">' +
+      "备份存档<span class=\"fold-i\">▾</span></h3>" +
+      (ui.setOpen.bk
+        ? '<p class="set-hint">身家和战绩是存在这个手机的浏览器里的。' +
+          "清理缓存、换手机、系统清理软件，都可能把它抹掉。" +
+          "备份一下存到微信收藏或者记事本，万一没了还能贴回来。</p>" +
+          '<textarea class="bk-box" id="bk-box" readonly placeholder="点下面「生成备份」"></textarea>' +
+          '<div class="bk-btns">' +
+          '<button type="button" class="icon-btn" id="bk-make">生成备份</button>' +
+          '<button type="button" class="icon-btn" id="bk-copy">复制</button>' +
+          '<button type="button" class="icon-btn danger" id="bk-restore">粘贴恢复</button>' +
+          "</div>" +
+          '<p class="set-hint">恢复：把备份码贴进上面的框，再点「粘贴恢复」。' +
+          "会覆盖当前的身家和战绩，问一遍才动。牌局记录太大，不在备份里。</p>"
+        : "") +
+
+      '<h3 class="fold' + (ui.setOpen.srv ? " open" : "") + '" id="set-srv-fold">' +
+      "联机服务器<span class=\"fold-i\">▾</span></h3>" +
+      (ui.setOpen.srv
+        ? '<div class="set-row"><label>地址</label>' +
+          '<input class="net-input" id="set-server" placeholder="https://xxx.pages.dev" value="' +
+          esc(settings.server || "") + '">' +
+          '<button type="button" class="icon-btn" id="set-server-save">保存</button></div>' +
+          '<p class="set-hint">' + (settings.server
+            ? "用的是你自己的服务器。清空这一格会改回内置的那台。"
+            : "留空就是用内置的（" +
+              DEFAULT_SERVERS.map(function (x) { return x.replace(/^https?:\/\//, ""); }).join(" 或 ") +
+              "，哪台通用哪台），一般不用改。想自己搭一台的话，「和朋友一起打」页面里有教程。") + "</p>"
+        : "");
+    bindSettings();
+  }
+  function rowNum(label, key, val) {
+    return '<div class="set-row"><label>' + label + '</label><div class="stepper">' +
+      '<button type="button" data-step="' + key + '" data-d="-1">−</button>' +
+      '<div class="val" id="v-' + key + '">' + val + "</div>" +
+      '<button type="button" data-step="' + key + '" data-d="1">+</button></div></div>';
+  }
+  function wealthPanel() {
+    var r = rankOf(wealth.w);
+    var rate = wealth.rounds ? Math.round(wealth.wins / wealth.rounds * 100) : 0;
+    return '<div class="set-row wealth-row"><label>我的身家</label>' +
+      '<div class="wr-right"><span class="wr-num' + (wealth.w < 0 ? " neg" : "") + '">' +
+      fmtMoney(wealth.w) + '</span><span class="wr-rank">' + r.name + '</span>' +
+      '<button type="button" class="icon-btn danger" id="wealth-reset">重来</button></div></div>' +
+      '<p class="set-hint">打了 ' + wealth.rounds + ' 盘，胡 ' + wealth.wins + ' 盘（' + rate + '%），自摸 ' +
+      wealth.selfDraws + ' 次　最高 ' + fmtMoney(wealth.peak) + '，最低 ' + fmtMoney(wealth.low) +
+      '　单盘最多赢 ' + fmtMoney(wealth.bestWin) + '，最多输 ' + fmtMoney(wealth.worstLoss) + '</p>';
+  }
+
+  var LUCK_HINT = {
+    kind: "起手和摸牌都朝你倾斜，只要不乱打基本都能赢。算分照旧，不掺水。",
+    fair: "完全随机洗牌，谁也不偏，最正的一副麻将。",
+    hard: "同样是随机洗牌，一样公平，但记牌和听牌提示全关，得自己记牌算张。"
+  };
+  var DIFF_HINT = {
+    wild:   "不太会打，基本见牌就丢，也很少碰杠。",
+    rookie: "会打，但常出错，该碰的经常放过。",
+    normal: "路子清楚，偶尔失误。",
+    master: "记牌、算进张、挑安全牌打。非常小心才赢得了。"
+  };
+  /* voice 已经从开关变成三档字符串，不在这里 */
+  var BOOL_SET = { sound: 1, counter: 1, vibrate: 1, awake: 1 };
+  var NUM_SET = { timer: 1 };
+  function rowSeg(label, key, opts) {
+    var b = "";
+    for (var i = 0; i < opts.length; i++) {
+      var on = "";
+      if (BOOL_SET[key]) on = (!!settings[key] === (opts[i][0] === "1")) ? " on" : "";
+      else if (NUM_SET[key]) on = (settings[key] === parseInt(opts[i][0], 10)) ? " on" : "";
+      else on = settings[key] === opts[i][0] ? " on" : "";
+      b += '<button type="button" data-seg="' + key + '" data-v="' + opts[i][0] + '" class="' + on.trim() + '">' + opts[i][1] + "</button>";
+    }
+    return '<div class="set-row"><label>' + label + '</label><div class="seg">' + b + "</div></div>";
+  }
+  function bindSettings() {
+    document.getElementById("set-body").onclick = function (e) {
+      var t = e.target;
+      var fold = t.closest && t.closest("#set-adv-fold, #set-voice-fold, #set-bk-fold, #set-srv-fold");
+      if (fold) {
+        var key = fold.id === "set-adv-fold" ? "adv"
+                : fold.id === "set-voice-fold" ? "voice"
+                : fold.id === "set-bk-fold" ? "bk" : "srv";
+        ui.setOpen[key] = !ui.setOpen[key];
+        renderSettings();
+        return;
+      }
+      var recId = t.getAttribute && t.getAttribute("data-rec");
+      if (recId) { recStart(recId); return; }
+      var playId = t.getAttribute && t.getAttribute("data-play");
+      if (playId) {
+        try { var a = new Audio(voicePack[playId]); a.play().catch(function () {}); } catch (e) {}
+        return;
+      }
+      if (t.id === "vc-export") { exportVoicePack(); return; }
+      if (t.id === "vc-import") { importVoicePack(); return; }
+      if (t.id === "vc-clear") {
+        if (!confirm("把录好的金坛话全部删掉？\n删了就回到手机自带的普通话。")) return;
+        voicePack = {};
+        try { localStorage.removeItem(VOICE_KEY); } catch (e) {}
+        renderSettings(); toast("清掉了");
+        return;
+      }
+      if (t.id === "bk-make") {
+        document.getElementById("bk-box").value = makeBackup();
+        document.getElementById("bk-box").removeAttribute("readonly");
+        toast("生成好了，点「复制」存到别处");
+        return;
+      }
+      if (t.id === "bk-copy") {
+        var bv = document.getElementById("bk-box").value;
+        if (!bv) { toast("先点「生成备份」"); return; }
+        copyText(bv, "备份码复制好了，贴到微信收藏里存着");
+        return;
+      }
+      if (t.id === "bk-restore") { restoreBackup(); return; }
+      if (t.id === "easy-mode") {
+        settings.font = "xlarge";     /* 字最大 */
+        settings.tsize = "big";       /* 牌最大，手牌自动排两行 */
+        settings.speed = "slow";      /* 电脑慢一点，看得清谁打了什么 */
+        settings.timer = 0;           /* 不催 */
+        settings.voice = "all";       /* 每张牌都念出来，眼睛不好也跟得上 */
+        settings.sound = true;
+        settings.counter = true;      /* 还剩几张写在旁边 */
+        settings.awake = true;        /* 不黑屏 */
+        settings.luck = "kind";       /* 牌运向着自己，赢面大些 */
+        settings.difficulty = "rookie";
+        saveSettings(); renderSettings();
+        toast("调好了，去打一盘试试");
+        return;
+      }
+      if (t.id === "set-server-save") {
+        settings.server = (document.getElementById("set-server").value || "").trim();
+        NET.base = null; NET.diag = null;   /* 换了地址，之前探测的结果作废 */
+        saveSettings(); renderSettings(); toast("服务器地址保存好了");
+        return;
+      }
+      if (t.id === "wealth-reset") {
+        if (confirm("把身家清零重来？\n当前 " + fmtMoney(wealth.w) + " 分和全部战绩都会没有，回到 " +
+                    fmtMoney(START_WEALTH) + " 分重新开始。")) {
+          resetWealth(); renderSettings();
+        }
+        return;
+      }
+      if (t.id === "cap-reset") {
+        settings.cap = capDefault(settings.base, settings.flowerScore);
+        saveSettings(); renderSettings(); return;
+      }
+      if (t.getAttribute("data-step")) {
+        var key = t.getAttribute("data-step");
+        var d = parseInt(t.getAttribute("data-d"), 10);
+        var step = key === "base" || key === "flowerScore" || key === "cap" ? 1 : 1;
+        settings[key] = Math.max(0, settings[key] + d * step);
+        if (key === "base" || key === "flowerScore") settings.cap = capDefault(settings.base, settings.flowerScore);
+        saveSettings(); renderSettings();
+      }
+      if (t.getAttribute("data-seg")) {
+        var k2 = t.getAttribute("data-seg");
+        var v = t.getAttribute("data-v");
+        if (BOOL_SET[k2]) settings[k2] = v === "1";
+        else if (NUM_SET[k2]) settings[k2] = parseInt(v, 10) || 0;
+        else settings[k2] = v;
+        saveSettings(); renderSettings();
+        if (k2 === "voice" && voiceOn()) say("act_peng");   /* 当场听一下是什么声音 */
+        if (k2 === "sound" && settings.sound) sfx("peng");
+        if (k2 === "vibrate" && settings.vibrate) buzz([0, 26, 55, 26]);
+        if (k2 === "awake") keepAwake(!!settings.awake && ui.screen === "table");
+      }
+    };
+  }
+
+  /* 只有内容真的变了才写 DOM。
+     牌河四家满编 64 张，重排一次要让浏览器解析近 10 万字符；
+     而大多数 render 是选牌、倒计时、提示这类跟牌河无关的事触发的，
+     照原样每次全量重写，老手机上每一次点击都会卡一下。 */
+  /* 这几个格子都是页面里写死的、从头到尾同一个节点，
+     内容只经 setHTML 改，所以缓存不会和实际 DOM 走散。 */
+
+
+  /* ───────── net.js ───────── */
+/* 金坛麻将 · 联机
+ * 找服务器、连 WebSocket、心跳重连、协议处理、房间大厅、连不上时的自诊断。
+ * 服务器是唯一权威：牌墙只在服务器上，每人只收到自己那副牌。
+ * 本地的规则判定、算番、渲染全部复用，这里只负责「显示」和「上报动作」。
+ * 消息格式的约定见 protocol.js。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
+
   /* ══════════════════════════════════════════
      联机
      服务器是唯一权威：牌墙只在服务器上，每人只收到自己那副牌。
@@ -3655,7 +3560,8 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     base: null,          /* 这次实际连上的那台 */
     showFix: false,      /* 连不上时把「怎么办」展开 */
     diag: null,          /* 体检结果 */
-    hbTimer: null, lastHeard: 0, sawPong: false
+    hbTimer: null, lastHeard: 0, sawPong: false,
+    sawUnknown: false    /* 收到过不认识的消息类型，只提示一次别刷屏 */
   };
 
   function netToken() {
@@ -3973,6 +3879,17 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     if (m.t === "over") { netOver(m); return; }
     if (m.t === "aiask") { netAiAsk(m); return; }
     if (m.t === "aiclaim") { netAiClaim(m); return; }
+
+    /* 走到这儿说明服务端发了一条这个版本不认识的消息。
+       以前是直接掉地上 —— 牌局无声停住，控制台干干净净，没法查。
+       实际最可能的原因是这台手机缓存着旧版本（老人的手机常年不清缓存），
+       所以顺手提示一句去更新。_测试_协议.mjs 会在提交前拦住真正的协议漂移。 */
+    console.warn("收到不认识的消息类型：", m.t, m);
+    if (!NET.sawUnknown) {
+      NET.sawUnknown = true;
+      toast("这台手机上的版本可能太旧了，退出重进一次试试", 4000);
+      checkVersion();
+    }
   }
 
   /* ── 把服务端消息塞进本地 game 对象，渲染照旧 ── */
@@ -4055,6 +3972,9 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     showScreen("table");
     render();
     if (m.needFlower) { netAskFlower(); setMsg("接上了，先把花补掉", true); return; }
+    /* 掉线的那一刻正好有人在问我碰不碰，服务端把这个问题随 resume 带回来了。
+       不接住的话，牌桌会一直等我这个永远不会来的回答。 */
+    if (m.claim) { netClaim(m.claim); setMsg("接上了，还有一张牌等你决定", true); return; }
     netRefreshBar();
     setMsg("接上了", true);
   }
@@ -4681,275 +4601,14 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     try { reg.update(); } catch (e) {}
   }
 
-  /* 录音面板。给会说金坛话的人用的 —— 通常是子女帮着录，不是外婆自己录。 */
-  function voicePanel() {
-    var done = voicePackCount(), total = VOICE_LIST.length;
-    var h = '<p class="set-hint">手机自带的语音只有普通话，没有金坛话。' +
-      "想让外婆听到乡音，得找个会说金坛话的人照着下面念一遍 —— " +
-      "点「录」，它录 1.8 秒自动停，录完立刻放给你听，不满意再点一次重录。" +
-      "全部录完点「导出」，把文件跟游戏一起传上去，全家的手机就都是金坛话了。</p>";
-    h += '<div class="vc-top"><div class="vc-prog">已录 <b>' + done + "</b> / " + total +
-         (done ? "　约 " + voicePackSize() + " KB" : "") + "</div>";
-    h += '<div class="bk-btns">' +
-         '<button type="button" class="icon-btn" id="vc-export"' + (done ? "" : " disabled") + '>导出语音包</button>' +
-         '<button type="button" class="icon-btn" id="vc-import">导入</button>' +
-         (done ? '<button type="button" class="icon-btn danger" id="vc-clear">全部清掉</button>' : "") +
-         "</div></div>";
-    h += '<div class="vc-list">';
-    for (var i = 0; i < VOICE_LIST.length; i++) {
-      var it = VOICE_LIST[i];
-      var got = hasClip(it.id);
-      var rec = REC.on && REC.id === it.id;
-      h += '<div class="vc-row' + (got ? " got" : "") + (rec ? " rec" : "") + '">' +
-           '<span class="vc-t">' + esc(it.text) + "</span>" +
-           '<span class="vc-mark">' + (got ? "✓" : "") + "</span>" +
-           '<button type="button" class="icon-btn tiny" data-rec="' + it.id + '"' +
-           (REC.on && !rec ? " disabled" : "") + '>' + (rec ? "录音中…" : (got ? "重录" : "录")) + "</button>" +
-           (got ? '<button type="button" class="icon-btn tiny" data-play="' + it.id + '">听</button>' : "") +
-           "</div>";
-    }
-    h += "</div>";
-    h += '<p class="set-hint">念的时候手机离嘴 20 公分左右，安静一点的房间效果最好。' +
-         "只录一部分也行，录了的用金坛话，没录的自动用普通话顶上。</p>";
-    h += '<p class="set-hint">拿不准发音的话，B 站上「语言狂魔Mark」有一期' +
-         "《江苏金坛话入门100句》可以对照着听。另外金坛话分两片 —— " +
-         "东边是吴语、西边是江淮官话，按外婆自己那一片的口音录就对了。</p>";
-    return h;
-  }
 
-  function renderSettings() {
-    var s = settings;
-    /* 顺序按「多久用一次」排：眼睛看不清是第一位要解决的，
-       所以字号和牌面放最前；算分参数和服务器地址设一次就不动，收到最后。 */
-    document.getElementById("set-body").innerHTML =
+  /* ───────── table.js ───────── */
+/* 金坛麻将 · 牌桌的画面与操作
+ * 四家座位、牌河、自己那手牌、操作栏、点牌选牌、提示、倒计时。
+ * 只管画和收操作，不管规则也不管流程。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
-      /* 帮不熟悉设置的人一步到位：眼睛不好、手慢的，点这一个就够 */
-      '<div class="easy-card">' +
-      '<div class="ez-t">看不清？手忙不过来？</div>' +
-      '<div class="ez-s">点一下，字和牌都放到最大，出牌放慢，还会念出来</div>' +
-      '<button type="button" class="big-btn" id="easy-mode">一键调舒服</button></div>' +
-
-      "<h3>看得清楚</h3>" +
-      rowSeg("字体大小", "font", [["normal", "正常"], ["large", "大"], ["xlarge", "特大"]]) +
-      rowSeg("牌面大小", "tsize", [["std", "标准"], ["big", "大（两行）"]]) +
-
-      "<h3>打得舒服</h3>" +
-      rowSeg("出牌速度", "speed",
-        [["vslow", "很慢 3.5秒"], ["slow", "慢 2.5秒"], ["mid", "适中 1.8秒"],
-         ["fast", "快 1.1秒"], ["vfast", "很快 0.6秒"]]) +
-      rowSeg("出牌倒计时", "timer",
-        [["0", "不限时"], ["120", "2分钟"], ["90", "90秒"], ["60", "60秒"],
-         ["45", "45秒"], ["30", "30秒"]]) +
-      rowSeg("语音播报", "voice",
-        [["off", "关"], ["act", "只报碰杠胡"], ["all", "每张牌都报"]]) +
-      '<p class="set-hint">' + (voicePackCount()
-        ? "现在用的是录好的金坛话（" + voicePackCount() + " 条）。"
-        : "现在是手机自带的普通话。想听金坛话，展开下面「金坛话语音」录一遍。") + "</p>" +
-      rowSeg("牌桌音效", "sound", [["1", "开"], ["0", "关"]]) +
-      rowSeg("震动反馈", "vibrate", [["1", "开"], ["0", "关"]]) +
-      rowSeg("打牌时屏幕常亮", "awake", [["1", "开"], ["0", "关"]]) +
-      rowSeg("剩余张数提示", "counter", [["1", "开"], ["0", "关"]]) +
-      (luck().assist ? "" : '<p class="set-hint warn">硬核档下记牌和听牌提示一律关闭，要靠自己记。</p>') +
-
-      "<h3>打得过瘾</h3>" +
-      rowSeg("牌运", "luck", [["kind", "轻松"], ["fair", "公平"], ["hard", "硬核"]]) +
-      '<p class="set-hint">' + LUCK_HINT[settings.luck || "fair"] + "</p>" +
-      rowSeg("对手水平", "difficulty",
-        [["wild", "瞎打"], ["rookie", "新手"], ["normal", "普通"], ["master", "高手"]]) +
-      '<p class="set-hint">' + DIFF_HINT[settings.difficulty || "rookie"] + "</p>" +
-
-      '<h3 class="fold' + (ui.setOpen.adv ? " open" : "") + '" id="set-adv-fold">' +
-      "算分和身家<span class=\"fold-i\">▾</span></h3>" +
-      (ui.setOpen.adv
-        ? rowNum("底数", "base", s.base) +
-          rowNum("花分值", "flowerScore", s.flowerScore) +
-          rowNum("封顶", "cap", s.cap) +
-          '<p class="set-hint">默认封顶 =（底数 + 3 × 花分值）× 4 = ' + capDefault(s.base, s.flowerScore) +
-          '　<button type="button" class="icon-btn" id="cap-reset" style="min-width:auto;min-height:36px;padding:0 12px">按公式重算</button></p>' +
-          wealthPanel()
-        : "") +
-
-      '<h3 class="fold' + (ui.setOpen.voice ? " open" : "") + '" id="set-voice-fold">' +
-      "金坛话语音" + (voicePackCount() ? "（已录 " + voicePackCount() + " 条）" : "") +
-      "<span class=\"fold-i\">▾</span></h3>" +
-      (ui.setOpen.voice ? voicePanel() : "") +
-
-      '<h3 class="fold' + (ui.setOpen.bk ? " open" : "") + '" id="set-bk-fold">' +
-      "备份存档<span class=\"fold-i\">▾</span></h3>" +
-      (ui.setOpen.bk
-        ? '<p class="set-hint">身家和战绩是存在这个手机的浏览器里的。' +
-          "清理缓存、换手机、系统清理软件，都可能把它抹掉。" +
-          "备份一下存到微信收藏或者记事本，万一没了还能贴回来。</p>" +
-          '<textarea class="bk-box" id="bk-box" readonly placeholder="点下面「生成备份」"></textarea>' +
-          '<div class="bk-btns">' +
-          '<button type="button" class="icon-btn" id="bk-make">生成备份</button>' +
-          '<button type="button" class="icon-btn" id="bk-copy">复制</button>' +
-          '<button type="button" class="icon-btn danger" id="bk-restore">粘贴恢复</button>' +
-          "</div>" +
-          '<p class="set-hint">恢复：把备份码贴进上面的框，再点「粘贴恢复」。' +
-          "会覆盖当前的身家和战绩，问一遍才动。牌局记录太大，不在备份里。</p>"
-        : "") +
-
-      '<h3 class="fold' + (ui.setOpen.srv ? " open" : "") + '" id="set-srv-fold">' +
-      "联机服务器<span class=\"fold-i\">▾</span></h3>" +
-      (ui.setOpen.srv
-        ? '<div class="set-row"><label>地址</label>' +
-          '<input class="net-input" id="set-server" placeholder="https://xxx.pages.dev" value="' +
-          esc(settings.server || "") + '">' +
-          '<button type="button" class="icon-btn" id="set-server-save">保存</button></div>' +
-          '<p class="set-hint">' + (settings.server
-            ? "用的是你自己的服务器。清空这一格会改回内置的那台。"
-            : "留空就是用内置的（" +
-              DEFAULT_SERVERS.map(function (x) { return x.replace(/^https?:\/\//, ""); }).join(" 或 ") +
-              "，哪台通用哪台），一般不用改。想自己搭一台的话，「和朋友一起打」页面里有教程。") + "</p>"
-        : "");
-    bindSettings();
-  }
-  function rowNum(label, key, val) {
-    return '<div class="set-row"><label>' + label + '</label><div class="stepper">' +
-      '<button type="button" data-step="' + key + '" data-d="-1">−</button>' +
-      '<div class="val" id="v-' + key + '">' + val + "</div>" +
-      '<button type="button" data-step="' + key + '" data-d="1">+</button></div></div>';
-  }
-  function wealthPanel() {
-    var r = rankOf(wealth.w);
-    var rate = wealth.rounds ? Math.round(wealth.wins / wealth.rounds * 100) : 0;
-    return '<div class="set-row wealth-row"><label>我的身家</label>' +
-      '<div class="wr-right"><span class="wr-num' + (wealth.w < 0 ? " neg" : "") + '">' +
-      fmtMoney(wealth.w) + '</span><span class="wr-rank">' + r.name + '</span>' +
-      '<button type="button" class="icon-btn danger" id="wealth-reset">重来</button></div></div>' +
-      '<p class="set-hint">打了 ' + wealth.rounds + ' 盘，胡 ' + wealth.wins + ' 盘（' + rate + '%），自摸 ' +
-      wealth.selfDraws + ' 次　最高 ' + fmtMoney(wealth.peak) + '，最低 ' + fmtMoney(wealth.low) +
-      '　单盘最多赢 ' + fmtMoney(wealth.bestWin) + '，最多输 ' + fmtMoney(wealth.worstLoss) + '</p>';
-  }
-
-  var LUCK_HINT = {
-    kind: "起手和摸牌都朝你倾斜，只要不乱打基本都能赢。算分照旧，不掺水。",
-    fair: "完全随机洗牌，谁也不偏，最正的一副麻将。",
-    hard: "同样是随机洗牌，一样公平，但记牌和听牌提示全关，得自己记牌算张。"
-  };
-  var DIFF_HINT = {
-    wild:   "不太会打，基本见牌就丢，也很少碰杠。",
-    rookie: "会打，但常出错，该碰的经常放过。",
-    normal: "路子清楚，偶尔失误。",
-    master: "记牌、算进张、挑安全牌打。非常小心才赢得了。"
-  };
-  /* voice 已经从开关变成三档字符串，不在这里 */
-  var BOOL_SET = { sound: 1, counter: 1, vibrate: 1, awake: 1 };
-  var NUM_SET = { timer: 1 };
-  function rowSeg(label, key, opts) {
-    var b = "";
-    for (var i = 0; i < opts.length; i++) {
-      var on = "";
-      if (BOOL_SET[key]) on = (!!settings[key] === (opts[i][0] === "1")) ? " on" : "";
-      else if (NUM_SET[key]) on = (settings[key] === parseInt(opts[i][0], 10)) ? " on" : "";
-      else on = settings[key] === opts[i][0] ? " on" : "";
-      b += '<button type="button" data-seg="' + key + '" data-v="' + opts[i][0] + '" class="' + on.trim() + '">' + opts[i][1] + "</button>";
-    }
-    return '<div class="set-row"><label>' + label + '</label><div class="seg">' + b + "</div></div>";
-  }
-  function bindSettings() {
-    document.getElementById("set-body").onclick = function (e) {
-      var t = e.target;
-      var fold = t.closest && t.closest("#set-adv-fold, #set-voice-fold, #set-bk-fold, #set-srv-fold");
-      if (fold) {
-        var key = fold.id === "set-adv-fold" ? "adv"
-                : fold.id === "set-voice-fold" ? "voice"
-                : fold.id === "set-bk-fold" ? "bk" : "srv";
-        ui.setOpen[key] = !ui.setOpen[key];
-        renderSettings();
-        return;
-      }
-      var recId = t.getAttribute && t.getAttribute("data-rec");
-      if (recId) { recStart(recId); return; }
-      var playId = t.getAttribute && t.getAttribute("data-play");
-      if (playId) {
-        try { var a = new Audio(voicePack[playId]); a.play().catch(function () {}); } catch (e) {}
-        return;
-      }
-      if (t.id === "vc-export") { exportVoicePack(); return; }
-      if (t.id === "vc-import") { importVoicePack(); return; }
-      if (t.id === "vc-clear") {
-        if (!confirm("把录好的金坛话全部删掉？\n删了就回到手机自带的普通话。")) return;
-        voicePack = {};
-        try { localStorage.removeItem(VOICE_KEY); } catch (e) {}
-        renderSettings(); toast("清掉了");
-        return;
-      }
-      if (t.id === "bk-make") {
-        document.getElementById("bk-box").value = makeBackup();
-        document.getElementById("bk-box").removeAttribute("readonly");
-        toast("生成好了，点「复制」存到别处");
-        return;
-      }
-      if (t.id === "bk-copy") {
-        var bv = document.getElementById("bk-box").value;
-        if (!bv) { toast("先点「生成备份」"); return; }
-        copyText(bv, "备份码复制好了，贴到微信收藏里存着");
-        return;
-      }
-      if (t.id === "bk-restore") { restoreBackup(); return; }
-      if (t.id === "easy-mode") {
-        settings.font = "xlarge";     /* 字最大 */
-        settings.tsize = "big";       /* 牌最大，手牌自动排两行 */
-        settings.speed = "slow";      /* 电脑慢一点，看得清谁打了什么 */
-        settings.timer = 0;           /* 不催 */
-        settings.voice = "all";       /* 每张牌都念出来，眼睛不好也跟得上 */
-        settings.sound = true;
-        settings.counter = true;      /* 还剩几张写在旁边 */
-        settings.awake = true;        /* 不黑屏 */
-        settings.luck = "kind";       /* 牌运向着自己，赢面大些 */
-        settings.difficulty = "rookie";
-        saveSettings(); renderSettings();
-        toast("调好了，去打一盘试试");
-        return;
-      }
-      if (t.id === "set-server-save") {
-        settings.server = (document.getElementById("set-server").value || "").trim();
-        NET.base = null; NET.diag = null;   /* 换了地址，之前探测的结果作废 */
-        saveSettings(); renderSettings(); toast("服务器地址保存好了");
-        return;
-      }
-      if (t.id === "wealth-reset") {
-        if (confirm("把身家清零重来？\n当前 " + fmtMoney(wealth.w) + " 分和全部战绩都会没有，回到 " +
-                    fmtMoney(START_WEALTH) + " 分重新开始。")) {
-          resetWealth(); renderSettings();
-        }
-        return;
-      }
-      if (t.id === "cap-reset") {
-        settings.cap = capDefault(settings.base, settings.flowerScore);
-        saveSettings(); renderSettings(); return;
-      }
-      if (t.getAttribute("data-step")) {
-        var key = t.getAttribute("data-step");
-        var d = parseInt(t.getAttribute("data-d"), 10);
-        var step = key === "base" || key === "flowerScore" || key === "cap" ? 1 : 1;
-        settings[key] = Math.max(0, settings[key] + d * step);
-        if (key === "base" || key === "flowerScore") settings.cap = capDefault(settings.base, settings.flowerScore);
-        saveSettings(); renderSettings();
-      }
-      if (t.getAttribute("data-seg")) {
-        var k2 = t.getAttribute("data-seg");
-        var v = t.getAttribute("data-v");
-        if (BOOL_SET[k2]) settings[k2] = v === "1";
-        else if (NUM_SET[k2]) settings[k2] = parseInt(v, 10) || 0;
-        else settings[k2] = v;
-        saveSettings(); renderSettings();
-        if (k2 === "voice" && voiceOn()) say("act_peng");   /* 当场听一下是什么声音 */
-        if (k2 === "sound" && settings.sound) sfx("peng");
-        if (k2 === "vibrate" && settings.vibrate) buzz([0, 26, 55, 26]);
-        if (k2 === "awake") keepAwake(!!settings.awake && ui.screen === "table");
-      }
-    };
-  }
-
-  /* 只有内容真的变了才写 DOM。
-     牌河四家满编 64 张，重排一次要让浏览器解析近 10 万字符；
-     而大多数 render 是选牌、倒计时、提示这类跟牌河无关的事触发的，
-     照原样每次全量重写，老手机上每一次点击都会卡一下。 */
-  /* 这几个格子都是页面里写死的、从头到尾同一个节点，
-     内容只经 setHTML 改，所以缓存不会和实际 DOM 走散。 */
   var htmlCache = {};
   function setHTML(el, html) {
     if (htmlCache[el.id] === html) return false;
@@ -5353,6 +5012,16 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
       render();
     });
   }
+
+
+  /* ───────── flow.js ───────── */
+/* 金坛麻将 · 单机牌局流程
+ * 一个人打三个电脑时的回合循环：摸打碰杠胡、补花、抢杠、结算、下一盘。
+ * 联机时这套不跑 —— 那边的流程由服务器推着走，见 net.js。
+ * 两边没有合并，是因为单机要支持悔牌、牌运、难度、存档续局，
+ * 而联机要的是绝对公平和掉线接管，本来就是两件事。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
 
   /* —— 游戏流程 —— */
 
@@ -6100,6 +5769,415 @@ body[data-tsize="big"] .claim { bottom: auto; top: 50%; transform: translate(-50
     if (game.current == null) game.current = game.dealer;
     turnLoop();
   }
+
+
+  /* ───────── app.js ───────── */
+/* 金坛麻将 · 骨架
+ * 常量、全局状态、牌墙与开局、PWA 安装、自测、事件绑定、启动。
+ * 剩下的都分出去了：规则 rules / 算番 score / 电脑 ai / 牌面 tiles /
+ * 反馈 feedback / 存档 store / 界面 pages / 联机 net / 牌桌 table / 流程 flow。
+ * 
+ * 这个文件必须最后加载：结尾那段事件绑定和启动代码要等前面全部声明完。
+ *
+ * 由 构建.mjs 拼进 index.html。改这里，不要改根目录那个。 */
+
+
+  var VERSION = "1.19.0";
+  var CHANGELOG = [
+    { v: "1.19.0", d: "2026-09-02", items: [
+      "修好一个会让整桌卡死的问题：轮到你选碰不碰的时候手机掉线，回来以后没人再问你了，四个人一起干等 —— 现在重连会把那张牌重新摆到你面前",
+      "联机时收到看不懂的消息不再闷头丢掉，会提醒你这台手机上的版本可能太旧了"
+    ] },
+    { v: "1.18.1", d: "2026-09-01", items: [
+      "修好一个会卡死的问题：欠着花掉线、系统替你补掉之后再回来，出牌按钮就再也不出现了",
+      "补花提示语改短，大牌面＋特大字时不会再被手牌区切掉半截"
+    ] },
+    { v: "1.18.0", d: "2026-09-01", items: [
+      "摸到花不再自动换掉了：花牌会留在手里，点一下它（或点「补花」）才亮到花区，然后从牌尾补一张",
+      "连着摸到花就连着补，一张一张来，跟真牌桌上的动作一样",
+      "补花期间不给出牌按钮，免得手快把花当废牌打出去",
+      "电脑和掉线托管的座位仍旧自动补，不会把牌局拖住",
+      "联机同步改了：服务端摸到花会停下来等你点，断线重连回来还欠着的那张花会接着让你补"
+    ] },
+    { v: "1.17.1", d: "2026-09-01", items: [
+      "录音界面加了发音参考：B 站有一期《江苏金坛话入门100句》可以对照着听",
+      "标明金坛话分两片 —— 东边吴语、西边江淮官话，按自家那片口音录就行"
+    ] },
+    { v: "1.17.0", d: "2026-09-01", items: [
+      "语音播报分三档：关 / 只报碰杠胡 / 每张打出的牌都报",
+      "可以录金坛话了：设置里有 40 条词，找会说的人照着念一遍，录完全家都能用",
+      "录音会自动剪掉前后空白、拉齐音量，一条约 7 KB，40 条加起来才 300 KB",
+      "统一转成 WAV，苹果安卓都放得响；录了哪条用哪条，没录的自动用普通话顶上",
+      "「一键调舒服」现在会把播报调成「每张牌都报」"
+    ] },
+    { v: "1.16.0", d: "2026-09-01", items: [
+      "房主复制完链接、切去微信发给朋友，回来房间还在了（以前会说「房间不存在」）",
+      "掉线的人回来还是原来的座位，房主身份、准备状态都不会丢",
+      "有人手机锁屏掉线，不再把房主卡在「还有 1 人没准备」上，可以先开局",
+      "掉线的人中途回来能接着打；一直不回来的，轮到他时电脑会替他走，牌局不会停",
+      "修掉了会反复断线重连、连准备都点不了的问题"
+    ] },
+    { v: "1.15.1", d: "2026-09-01", items: [
+      "修好联机时中途退出再进来、电脑就不动了的问题",
+      "退出的人如果正好是替电脑算牌的那个，屋里别人会立刻接手，牌局不会停",
+      "万一人全退光了，服务器自己替电脑走一步，牌局不会永远卡死",
+      "（这次改的是服务器，游戏文件也要一起传）"
+    ] },
+    { v: "1.15.0", d: "2026-09-01", items: [
+      "牌面全部换成实物麻将的画法，不再是自己描的",
+      "筒子是铜钱花瓣纹，萬字数字是靛蓝色，五萬写作「伍」——和家里那副牌一样",
+      "一条的雀、条子的红绿搭配、春夏秋冬梅蘭竹菊，都按实物来",
+      "牌面反而更省资源了：屏幕上的元素少了一成，牌河重排快了一倍"
+    ] },
+    { v: "1.14.1", d: "2026-09-01", items: [
+      "修好联机时牌河会凭空多出一张牌的问题（断线重连后同一条消息会收两遍）",
+      "重复消息现在一律当没收到，一副牌稳稳是 144 张",
+      "服务端同一个座位只保留一条连接，从根上不再发两遍"
+    ] },
+    { v: "1.14.0", d: "2026-09-01", items: [
+      "设置页顶上加了「一键调舒服」：字和牌放最大、出牌放慢、开语音，点一下全搞定",
+      "新增备份存档：身家和战绩能导出成一串码，存到微信收藏里，换手机或清了缓存都能贴回来",
+      "修好一个明显的错：游戏 ID 每次打开都在变，报给牌友的号第二天就对不上，现在真的固定不变了",
+      "修好一个隐患：存档里只要有一个字段类型不对，整个游戏会打不开，现在会自动纠正",
+      "修好另一个隐患：设置值损坏时会让能胡的牌被误判成「无番」",
+      "设置和联机两页也统一了版式，和其他页面一样宽、一样的标题样式"
+    ] },
+    { v: "1.13.0", d: "2026-09-01", items: [
+      "修好一个大问题：设置页之前是全白的，打不开，现在正常了",
+      "所有页面改成铺满屏幕，以前内容挤在中间窄窄一条，两边全空着",
+      "设置按「看得清楚 / 打得舒服 / 打得过瘾」分了组，字号和牌面大小提到最前面",
+      "「我的」改成一进来先看到身家和称号，称号一览和个人资料收起来了",
+      "点左上角头像还是直接进资料，会自动展开",
+      "帮助里的更新记录只留最近三版，更早的点开再看",
+      "结算面板的按钮不再压住底下的字",
+      "小按钮加大到一戳就中，个人资料那行小字也调大了"
+    ] },
+    { v: "1.12.0", d: "2026-09-01", items: [
+      "画面流畅了很多：一次重绘从 8 毫秒降到 0.04 毫秒，老手机点哪都跟手",
+      "牌面改成共用一份图样，屏幕上的元素少了一半，更省电",
+      "联机换到国内直连能通的地址，不用挂梯子也能进房间了",
+      "连不上时 6 秒就说清楚，不再干等半分钟",
+      "服务器可以配多个，一个不通自动换另一个，连通过的会记住",
+      "新增「检查网络」，一眼看出是没网、服务器挂了、还是网址被拦",
+      "「和朋友一起打」里加了「连不上怎么办」，写明原因和解决办法",
+      "修掉一个联机的坑：离线缓存会把开房请求也存下来，导致每次开房拿到同一个房间号",
+      "断线重连更快，从后台切回来立刻重连",
+      "牌桌加了聚光和收边，牌做出了厚度，出牌带一点自然的偏转"
+    ] },
+    { v: "1.11.0", d: "2026-09-01", items: [
+      "首页只留一个「开始游戏」，点进去再选怎么打",
+      "上次没打完的那盘，会显示在最上面，还标着打到第几盘、剩多少张",
+      "「自己一个人打」和「和朋友一起打」并排放，不用再找",
+      "小屏幕、大字号下三个选项也能一眼看全"
+    ] },
+    { v: "1.10.0", d: "2026-09-01", items: [
+      "有个人资料了：游戏 ID、昵称、年龄、性别",
+      "主页左上角显示头像和资料，点一下就能改",
+      "游戏 ID 自动生成、终身不变，可以复制给朋友",
+      "联机进房间时，别人看到的就是你的昵称"
+    ] },
+    { v: "1.9.1", d: "2026-09-01", items: [
+      "服务器地址已经内置好，装上就能联机，不用再一台台手填",
+      "「和朋友一起打」里能看到当前用的服务器，有「复制网址」按钮",
+      "同一页里加了自己搭服务器的教程，命令都能一键复制",
+      "想用自己的服务器就点「改成别的」，随时能改回默认"
+    ] },
+    { v: "1.9.0", d: "2026-08-31", items: [
+      "能和朋友一起打了：开房间拿房间号，或者直接发邀请链接",
+      "最多四个人，空位自动用电脑补上",
+      "所有人都点了「准备好了」，房主才能开始",
+      "房主可以选电脑难度，也可以把人请出去",
+      "牌是服务器发的，每人只收到自己的牌，房主也看不到别人的",
+      "掉线会自动重连，回来还是原来的座位和手牌"
+    ] },
+    { v: "1.8.0", d: "2026-08-31", items: [
+      "修好一个大 bug：以前只要自己刚打过牌，别人打出的牌就一张都胡不了，点炮胡几乎发生不了",
+      "现在上家打出的牌正好补上你的顺子并能和牌时，可以直接胡（等于吃下来就胡）",
+      "「不能胡自己打过的牌」改成只拦自己打出去的那几张，不再一出牌就锁死全部",
+      "「过水不胡」改成真的放弃过一次可胡的牌之后才锁"
+    ] },
+    { v: "1.7.1", d: "2026-08-31", items: [
+      "去掉了屏幕最下方那块发黑的区域，手牌区改成牌桌的深绿，整屏是一张完整的桌子",
+      "手牌区压薄了一点，牌桌看得更多",
+      "修好了 iPhone 横屏刘海挡住时手牌被挤成两行的问题"
+    ] },
+    { v: "1.7.0", d: "2026-08-31", items: [
+      "首页加了「我的」：身家、称号、战绩、历史牌局都在里面",
+      "可以复盘：点历史里的任意一盘，能看到当时四家的牌和算分明细",
+      "称号从 7 个加到 11 个，多了新丁、名家、大师、宗师",
+      "称号之间的身家差距拉大了，越往上越难爬（开局仍是「熟手」，不会降级）",
+      "「我的」里能看到完整的称号阶梯和各自门槛"
+    ] },
+    { v: "1.6.0", d: "2026-08-31", items: [
+      "打牌时屏幕保持常亮，不会想一想就黑屏",
+      "加了「提示」按钮，不知道打哪张时点一下，会指出该打的牌并说明理由",
+      "双击一张牌可以直接打出，不用再点「打出」",
+      "碰 / 杠 / 胡 的按钮改到手牌正上方居中，更大更好按，也不再挤动画面",
+      "加了「牌面大小」，选「大」牌会放大约四分之一、手牌排成两行",
+      "碰杠胡时手机会轻轻震一下（安卓）",
+      "牌桌中间会写明轮到谁出牌"
+    ] },
+    { v: "1.5.0", d: "2026-08-31", items: [
+      "难度拆成「牌运」和「对手水平」两个独立档位",
+      "牌运分轻松 / 公平 / 硬核，硬核档关掉记牌和听牌提示，得自己记",
+      "对手分瞎打 / 新手 / 普通 / 高手，高手会记牌、算进张、挑安全牌打",
+      "结算时摊出四家牌型，没胡的显示还差几张听牌",
+      "出牌倒计时从 2 档加到 6 档",
+      "首页加了版本号和帮助，有新版本会提示更新"
+    ] },
+    { v: "1.4.0", d: "2026-08-30", items: [
+      "可以添加到主屏幕，像 App 一样用",
+      "加了离线缓存，装好之后断网也能打"
+    ] },
+    { v: "1.3.0", d: "2026-08-30", items: [
+      "加了身家，开局 2000，输赢跨天累计",
+      "身家可以打成负数，不会破产出局",
+      "按身家给称号，从学徒一路到牌王",
+      "结算面板顶部显示身家变化和升降段"
+    ] },
+    { v: "1.2.0", d: "2026-08-29", items: [
+      "牌面照实物重画：同心筒子、真竹节条子、一条画雀",
+      "加了牌桌音效，碰杠胡都有声",
+      "点一张手牌会告诉你这种牌还剩几张",
+      "难度和出牌速度档位细分"
+    ] },
+    { v: "1.1.0", d: "2026-08-29", items: [
+      "改成横屏牌桌，手牌一行排完",
+      "竖屏拿手机时画面自动转过来",
+      "四家牌河分开摆，结算明细分两栏"
+    ] },
+    { v: "1.0.0", d: "2026-08-29", items: [
+      "第一版：金坛玩法、不能吃牌、一花起胡、算分明细"
+    ] }
+  ];
+
+  var SAVE_KEY = "jintan_mj_v1";
+  var SET_KEY = "jintan_mj_set_v1";
+  var NAMES = ["你", "下家", "对家", "上家"];
+
+  /* 出牌速度 5 档（毫秒） */
+  var SPEED = { vslow: 3500, slow: 2500, mid: 1800, fast: 1100, vfast: 600 };
+
+  /* 对手水平 4 档
+     sloppy = 走神概率（随机乱打、漏碰漏杠）
+     defend = 防守权重（照牌河挑安全牌打）
+     master = 走完整的向听 + 进张概率计算 */
+  var DIFF = {
+    wild:   { sloppy: 0.92, defend: 0,   master: false },  /* 不会玩，基本瞎打 */
+    rookie: { sloppy: 0.45, defend: 0,   master: false },  /* 会打，常出错 */
+    normal: { sloppy: 0.12, defend: 0.5, master: false },  /* 偶尔失误 */
+    master: { sloppy: 0,    defend: 1,   master: true  }   /* 记牌算概率 */
+  };
+  var DIFF_ALIAS = { easy: "rookie", hard: "master" };     /* 旧存档的值 */
+  function diff() {
+    var k = DIFF_ALIAS[settings.difficulty] || settings.difficulty;
+    return DIFF[k] || DIFF.rookie;
+  }
+
+  /* 牌运 3 档：只影响发到你手上的牌，不影响电脑，也不影响算分
+     kind = 起手和摸牌都朝你倾斜；fair / hard = 完全随机洗牌
+     hard 额外关掉记牌提示和听牌提示，逼你自己记 */
+  var LUCK = {
+    kind: { bias: true,  assist: true  },
+    fair: { bias: false, assist: true  },
+    hard: { bias: false, assist: false }
+  };
+  function luck() { return LUCK[settings.luck] || LUCK.fair; }
+
+  var settings = {
+    base: 10, flowerScore: 5, cap: 100,
+    difficulty: "easy", speed: "mid", font: "normal",
+    voice: "act", timer: 0, sound: true, counter: true,
+    luck: "fair", vibrate: true, awake: true, tsize: "std",
+    server: ""
+  };
+  var game = null;
+  var ui = {
+    screen: "home", prevScreen: "home", selected: null,
+    paused: false, claimWait: null, discardWait: null, gangPickWait: null,
+    flowerWait: null, flowerId: null,
+    mineOpen: { ladder: false, prof: false },   /* 「我的」里两块折叠区 */
+    mineFocus: null,                            /* 进来后要自动展开并滚过去的那块 */
+    setOpen: { adv: false, voice: false, bk: false, srv: false }   /* 设置里几块折叠区 */
+  };
+  var gen = 0;
+  var uid = 1;
+  var voiceUnlocked = false;
+  var timerId = null;
+  var timerLeft = 0;
+
+  /* 把两个纯模块接到本模块的状态上。
+     score.js 拿的是 settings 本体的引用，设置里改了封顶/底分立刻生效；
+     ai.js 要的三个函数都得看牌局现状，所以留在这里，用注入的方式给它。 */
+  setScoreOpts(settings);
+  setAiView({
+    knownCount: function (k) { return knownCount(k); },
+    safeScore:  function (k) { return safeScore(k); },
+    diff:       function ()  { return diff(); }
+  });
+
+  function nextTileId() { return uid++; }
+
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+
+
+
+  function selfDrawInfo(p) {
+    return checkHu(p, p.lastDrawn || null, {
+      selfDraw: true,
+      kongDraw: game && game.kongDraw,
+      addWin: false
+    });
+  }
+
+
+
+  function emptyPlayer(i, score) {
+    return {
+      name: NAMES[i], hand: [], melds: [], flowers: [], discards: [],
+      score: score || 0, guoShui: false, passed: [], lastDrawn: null
+    };
+  }
+
+  function newGameState(keepScores) {
+    var scores = [0, 0, 0, 0];
+    var dealer = 0;
+    var round = 1;
+    if (keepScores && game) {
+      for (var i = 0; i < 4; i++) scores[i] = game.players[i].score;
+      dealer = game.nextDealer;
+      round = game.round + 1;
+    }
+    return {
+      wall: shuffle(makeWall(nextTileId)),
+      players: [emptyPlayer(0, scores[0]), emptyPlayer(1, scores[1]), emptyPlayer(2, scores[2]), emptyPlayer(3, scores[3])],
+      dealer: dealer,
+      nextDealer: dealer,
+      current: dealer,
+      round: round,
+      phase: "play",
+      lastDiscard: null,
+      lastFrom: null,
+      kongDraw: false,
+      needDraw: false,
+      drewThisTurn: true,
+      undo: null,
+      over: false,
+      settle: null
+    };
+  }
+
+  function dealTiles() {
+    var d = game.dealer;
+    for (var r = 0; r < 13; r++) {
+      for (var i = 0; i < 4; i++) {
+        var pi = (d + i) % 4;
+        game.players[pi].hand.push(game.wall.shift());
+      }
+    }
+    game.players[d].hand.push(game.wall.shift());
+    biasStartingHand();
+    for (var j = 0; j < 4; j++) {
+      sortHand(game.players[j]);
+      var h = game.players[j].hand;
+      if (h.length) game.players[j].lastDrawn = h[h.length - 1].key;
+    }
+  }
+
+  function sortHand(p) {
+    p.hand.sort(function (a, b) { return cmpKey(a.key, b.key) || a.id - b.id; });
+  }
+
+  function drawFront() { return game.wall.length ? game.wall.shift() : null; }
+  function drawBack() { return game.wall.length ? game.wall.pop() : null; }
+
+  /* ── 牌运倾斜（只在「轻松」档、只对玩家生效）──
+     手法是和牌墙里的牌「交换」，牌张总数和牌墙长度都不变，
+     不会凭空造牌，也不会出现第五张同样的牌。 */
+  function numKeysOf(p) {
+    var a = [];
+    for (var i = 0; i < p.hand.length; i++) if (!isFlower(p.hand[i].key)) a.push(p.hand[i].key);
+    return a;
+  }
+
+  function biasStartingHand() {
+    if (!luck().bias || !game) return;
+    var p = game.players[0];
+    for (var pass = 0; pass < 3; pass++) {
+      var keys = numKeysOf(p);
+      if (!keys.length) return;
+      var cur = shantenOf(counts34(keys), 0);
+      if (cur <= 1) return;                    /* 已经够好了，别喂过头 */
+      /* 找手里最没用的一张 */
+      var worstIx = -1, worstV = -1;
+      for (var i = 0; i < p.hand.length; i++) {
+        if (isFlower(p.hand[i].key)) continue;
+        var v = isolateScore(p.hand[i].key, keys);
+        if (v > worstV) { worstV = v; worstIx = i; }
+      }
+      if (worstIx < 0) return;
+      var look = Math.min(12, game.wall.length);
+      var bestW = -1, bestS = cur;
+      for (var w = 0; w < look; w++) {
+        var wk = game.wall[w].key;
+        if (isFlower(wk)) continue;
+        var trial = keys.slice();
+        var ix = trial.indexOf(p.hand[worstIx].key);
+        if (ix < 0) continue;
+        trial[ix] = wk;
+        var s = shantenOf(counts34(trial), 0);
+        if (s < bestS) { bestS = s; bestW = w; }
+      }
+      if (bestW < 0) return;                   /* 换不动了就收手 */
+      var tmp = p.hand[worstIx];
+      p.hand[worstIx] = game.wall[bestW];
+      game.wall[bestW] = tmp;
+      sortHand(p);
+    }
+  }
+
+  /* 玩家摸牌时，从牌墙最前面 3 张里挑一张最有用的换到最前 */
+  function drawFrontFor(pi) {
+    if (pi === 0 && luck().bias && game.wall.length > 1) {
+      var p = game.players[0];
+      var keys = numKeysOf(p);
+      var look = Math.min(3, game.wall.length);
+      var bestI = 0, bestS = 99;
+      for (var i = 0; i < look; i++) {
+        var k = game.wall[i].key;
+        if (isFlower(k)) { bestI = i; break; }   /* 花牌白拿一花，也算好事 */
+        var s = shantenOf(counts34(keys.concat([k])), p.melds.length);
+        if (s < bestS) { bestS = s; bestI = i; }
+      }
+      if (bestI > 0) {
+        var t = game.wall[0];
+        game.wall[0] = game.wall[bestI];
+        game.wall[bestI] = t;
+      }
+    }
+    return drawFront();
+  }
+
+  function still(g) { return g === gen && game && !game.over; }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      var remain = ms, last = Date.now();
+      function tick() {
+        if (gen && game && game._abort) { resolve("abort"); return; }
+        var now = Date.now();
+        if (!ui.paused) remain -= (now - last);
+        last = now;
+        if (remain <= 0) resolve("ok");
+        else setTimeout(tick, Math.min(50, remain));
+      }
+      tick();
+    });
+  }
+
+  function aiDelay() { return sleep(SPEED[settings.speed] || 1500); }
+
 
   /* —— PWA —— */
   function setupPWA() {

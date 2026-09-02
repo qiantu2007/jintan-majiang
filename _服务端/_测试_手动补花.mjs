@@ -91,32 +91,54 @@ function snapshot(st) {
   };
 }
 
-async function main() {
-  const { code } = await (await fetch(`${HTTP}/new`)).json();
-  console.log("房间:", code);
-  const me = connect(code, "F-me", "我", { create: true });
-  await opened(me);
-  await sleep(600);
-  send(me.ws, { t: "start" });
-  await sleep(1800);
-  if (!me.dealt) { console.log("✗ 没发牌"); process.exit(1); }
+/* 后面几步都得先摸到一张花才有得测，而一副牌只有 8 张花，
+   自己那门一局下来不一定摸得到。原来遇上这种情况会打印「重跑一次」
+   然后按通过退出 —— 等于这条测试有相当比例的运行其实什么都没测。
+   改成换个房间重开一局，最多试几次；一次都没摸到才算失败。 */
+async function 打到摸出花(最多试几次) {
+  for (let 第几次 = 1; 第几次 <= 最多试几次; 第几次++) {
+    const { code } = await (await fetch(`${HTTP}/new`)).json();
+    const me = connect(code, "F-me", "我", { create: true });
+    await opened(me);
+    await sleep(600);
+    send(me.ws, { t: "start" });
+    await sleep(1800);
+    if (!me.dealt) { try { me.ws.close(); } catch {} continue; }
 
-  console.log("\n【一】开局：发牌时的花仍然自动补（未改动的行为）");
-  const startFlowers = me.hand.filter((t) => isFlower(t.key)).length;
-  check("开局手牌里没有花", startFlowers === 0, "手里 " + me.hand.length + " 张");
-
-  console.log("\n【二】打到摸出花为止，看服务端会不会停");
-  let guard = 0;
-  while (guard++ < 140 && !me.over && !(me.current === me.seat && me.needFlower)) {
-    if (me.current === me.seat && me.hand.length % 3 === 2) {
-      const t = me.hand[me.hand.length - 1];
-      if (!isFlower(t.key)) { send(me.ws, { t: "act", a: "discard", id: t.id }); await sleep(240); continue; }
+    if (第几次 === 1) {
+      console.log("房间:", code);
+      console.log("\n【一】开局：发牌时的花仍然自动补（未改动的行为）");
+      check("开局手牌里没有花", me.hand.filter((t) => isFlower(t.key)).length === 0,
+            "手里 " + me.hand.length + " 张");
+      console.log("\n【二】打到摸出花为止，看服务端会不会停");
     }
-    await sleep(150);
+
+    let guard = 0;
+    while (guard++ < 140 && !me.over && !(me.current === me.seat && me.needFlower)) {
+      if (me.current === me.seat && me.hand.length % 3 === 2) {
+        const t = me.hand[me.hand.length - 1];
+        if (!isFlower(t.key)) { send(me.ws, { t: "act", a: "discard", id: t.id }); await sleep(240); continue; }
+      }
+      await sleep(150);
+    }
+    if (me.current === me.seat && me.needFlower) return { code, me, 第几次 };
+
+    console.log(`  （第 ${第几次} 局自己这门没摸到花，换个房间重开）`);
+    try { me.ws.close(); } catch {}
+    await sleep(400);
   }
-  const gotFlower = me.current === me.seat && me.needFlower;
-  check("摸到花时服务端停住了", gotFlower, gotFlower ? "" : "这局没摸到花，重跑一次");
-  if (!gotFlower) { console.log(fail ? `\n${fail} 项没过` : ""); process.exit(fail ? 1 : 0); }
+  return null;
+}
+
+async function main() {
+  const 试出来的 = await 打到摸出花(6);
+  if (!试出来的) {
+    check("摸到花时服务端停住了", false, "连开 6 局自己这门都没摸到花 —— 概率太低，八成是发牌或补花的逻辑坏了");
+    console.log(`\n${fail} 项没过`);
+    process.exit(1);
+  }
+  const { code, me, 第几次 } = 试出来的;
+  check("摸到花时服务端停住了", true, 第几次 > 1 ? `第 ${第几次} 局摸到` : "");
   check("停住时 phase 是 flower", me.phase === "flower", "phase=" + me.phase);
   check("手里确实有花", me.hand.some((t) => isFlower(t.key)));
 
