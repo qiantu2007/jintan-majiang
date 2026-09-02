@@ -156,12 +156,20 @@ cd "_服务端"; npx wrangler deploy
 ```
 
 ```bash
-cd "_服务端Pages"; npx wrangler pages deploy
+cd "_服务端Pages"; npx wrangler pages deploy --branch production
 ```
 
 第一条打印出来的 `workers.dev` 网址**忽略掉**，国内进不去也用不到。
 为什么要分两段、为什么不能合成一个，见
 [`_服务端Pages/部署步骤.md`](_服务端Pages/部署步骤.md)。
+
+> **`--branch production` 不能省。** 这个 Pages 项目的生产分支叫
+> `production`，而本仓库的分支叫 `main`。不写这个参数，wrangler 会照
+> 当前 git 分支名把东西发到一个**预览地址**去，`jintan-mj.pages.dev`
+> 纹丝不动 —— 命令照样打印「部署成功」，但线上根本没变。
+>
+> （这个仓库 2026-09-02 才开始用 git。在那之前没有 git 上下文，
+> wrangler 默认就发生产，所以老命令一直是对的；有了 git 之后不写就会跑偏。）
 
 ### 二、游戏网页
 
