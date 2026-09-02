@@ -8,92 +8,18 @@
  *   算番、计分、界面全在客户端，服务器不参与，也就无从偏袒。
  */
 
-/* ══════════ 牌 ══════════ */
-const SUITS = ["m", "s", "p"];
-const KEYS34 = [];
-for (const s of SUITS) for (let n = 1; n <= 9; n++) KEYS34.push(s + n);
-for (let z = 1; z <= 7; z++) KEYS34.push("z" + z);
+/* 规则内核是和客户端共用的同一个文件 —— 以前这里有一份逐字重写的副本
+   （makeWall / counts34 / allMeldForms / canWinShape 等 85 行），
+   改一次规则要记得改两处，漏一处就是服务端判胡和客户端算番对不上。 */
+import { makeWall, shuffle, isFlower, canWinShape, countKey } from "../src/rules.js";
 
-function makeWall() {
-  const w = [];
-  let id = 1;
-  for (const k of KEYS34) for (let i = 0; i < 4; i++) w.push({ id: id++, key: k });
-  for (let f = 1; f <= 8; f++) w.push({ id: id++, key: "f" + f });
-  return w;
+/* 洗牌用 crypto，不是 Math.random —— 服务器自己也猜不到牌序。
+   单机那边不需要这个强度，所以随机源是传进去的，不写死在 rules 里。 */
+function cryptoRand() {
+  const r = new Uint32Array(1);
+  crypto.getRandomValues(r);
+  return r[0] / 4294967296;
 }
-
-/* 用 crypto 洗牌，不是 Math.random —— 服务器自己也猜不到牌序 */
-function shuffle(a) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const r = new Uint32Array(1);
-    crypto.getRandomValues(r);
-    const j = r[0] % (i + 1);
-    const t = a[i]; a[i] = a[j]; a[j] = t;
-  }
-  return a;
-}
-
-const isFlower = k => k.charAt(0) === "f";
-const suitOf = k => k.charAt(0);
-const numOf = k => parseInt(k.slice(1), 10);
-const keyIndex = k => KEYS34.indexOf(k);
-
-function counts34(keys) {
-  const c = new Array(34).fill(0);
-  for (const k of keys) { const i = keyIndex(k); if (i >= 0) c[i]++; }
-  return c;
-}
-
-/* ══════════ 和牌判定（只判牌型，不算番）══════════
-   服务器只需要知道「这张牌能不能让某人和牌」，好决定要不要给他弹「胡」。
-   到底算几花几番、够不够一花起胡、有没有过水，全由客户端自己判断。 */
-function allMeldForms(keys) {
-  const res = [];
-  const cnt = counts34(keys);
-  (function rec(i, melds) {
-    while (i < 34 && cnt[i] === 0) i++;
-    if (i >= 34) { res.push(melds.slice()); return; }
-    if (cnt[i] >= 3) {
-      cnt[i] -= 3; melds.push(1); rec(i, melds); melds.pop(); cnt[i] += 3;
-    }
-    if (i < 27 && i % 9 <= 6 && cnt[i + 1] > 0 && cnt[i + 2] > 0) {
-      cnt[i]--; cnt[i + 1]--; cnt[i + 2]--;
-      melds.push(2); rec(i, melds); melds.pop();
-      cnt[i]++; cnt[i + 1]++; cnt[i + 2]++;
-    }
-  })(0, []);
-  return res;
-}
-
-function canWinShape(handKeys, nMelds) {
-  const keys = handKeys.filter(k => !isFlower(k));
-  /* 七对 */
-  if (nMelds === 0 && keys.length === 14) {
-    const c = counts34(keys);
-    let pairs = 0, ok = true;
-    for (let i = 0; i < 34; i++) {
-      if (c[i] % 2 !== 0) { ok = false; break; }
-      pairs += c[i] / 2;
-    }
-    if (ok && pairs === 7) return true;
-  }
-  /* 标准型：4 面子 + 1 将 */
-  if (keys.length % 3 !== 2) return false;
-  const need = 4 - nMelds;
-  const a = keys.slice().sort((x, y) => keyIndex(x) - keyIndex(y));
-  const tried = {};
-  for (let i = 0; i < a.length - 1; i++) {
-    if (a[i] !== a[i + 1] || tried[a[i]]) continue;
-    tried[a[i]] = 1;
-    const rest = a.slice(0, i).concat(a.slice(i + 2));
-    for (const forms of allMeldForms(rest)) {
-      if (forms.length === need) return true;
-    }
-  }
-  return false;
-}
-
-function countKey(arr, k) { let n = 0; for (const x of arr) if (x === k) n++; return n; }
 
 /* ══════════ 房间 ══════════ */
 const CODE_CHARS = "ACDEFGHJKLMNPQRSTUVWXY3479";  /* 去掉了容易看错的 0O1IB8Z2S6 */
@@ -350,7 +276,7 @@ export class Room {
   startRound(first) {
     const R = this.room;
     R.started = true;
-    const wall = shuffle(makeWall());
+    const wall = shuffle(makeWall(), cryptoRand);
     const dealer = first ? 0 : (R.g ? R.g.nextDealer : 0);
     const g = {
       wall, dealer, current: dealer, round: R.g ? R.g.round + 1 : 1,
