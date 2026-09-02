@@ -715,6 +715,16 @@ export class Room {
   pushResume(seat) {
     const g = this.room.g;
     if (!g) return;
+
+    /* 断线的那一刻正好有人在问他碰不碰：那条 claim 是发给已经断掉的连接的，
+       不在这里补一遍，他回来就再也不会被问到。
+       而且 armAIWatch 看他已经在线，会认为「有真人在想，等着就行」，
+       连兜底闹钟都不上 —— 整桌永久停在这里，四个人都不知道在等谁。
+       下面的 needFlower 是同一类问题的另一半，当初只补了那一半。 */
+    const c = g.claim;
+    const 轮到他答 = c && c.pending.includes(seat);
+    const o = 轮到他答 ? (c.opts || []).find(x => x.i === seat) : null;
+
     this.sendTo(seat, {
       t: "resume", seat, round: g.round, dealer: g.dealer,
       hand: g.hands[seat].map(x => ({ id: x.id, key: x.key })),
@@ -725,7 +735,10 @@ export class Room {
       lastDiscard: g.lastDiscard ? { id: g.lastDiscard.id, key: g.lastDiscard.key } : null,
       lastFrom: g.lastFrom, opts: this.room.opts,
       /* 断线前还欠着一张花，回来要接着补，不然他这轮点不动 */
-      needFlower: g.phase === "flower" && g.current === seat
+      needFlower: g.phase === "flower" && g.current === seat,
+      /* 断线前还欠一个「碰不碰」的回答，字段和 claim 消息保持一致 */
+      claim: o ? { from: c.from, tile: { id: c.tile.id, key: c.tile.key },
+                   hu: o.canHu, gang: o.canGang, peng: o.canPeng } : null
     });
   }
 }
